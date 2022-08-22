@@ -7,6 +7,8 @@ import 'package:smart_table_flutter/common/smart_table_sort_text_field.dart';
 import 'package:smart_table_flutter/core/smart_table_controller.dart';
 import 'package:smart_table_flutter/core/utils.dart';
 
+export 'package:smart_table_flutter/classes/classes.dart';
+
 typedef OnControllerCreated = Function(SmartTableController smartTableController);
 
 const _DEFAULT_DATE_FORMAT = "yyyy-MM-dd";
