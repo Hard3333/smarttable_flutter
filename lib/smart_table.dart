@@ -1,30 +1,39 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:smart_table_flutter/classes/classes.dart';
+import 'package:smart_table_flutter/common/remove_dialog.dart';
 import 'package:smart_table_flutter/common/smart_table_sort_text_field.dart';
 import 'package:smart_table_flutter/core/smart_table_controller.dart';
 import 'package:smart_table_flutter/core/utils.dart';
-
+import 'package:flutter_animated_dialog/flutter_animated_dialog.dart';
 export 'package:smart_table_flutter/classes/classes.dart';
 
 typedef OnControllerCreated = Function(SmartTableController smartTableController);
+typedef OnAddNewElement<T> = FutureOr<T?> Function();
+typedef OnRemoveElement<T> = Function(T element);
+typedef OnRowTap<T> = Function(T element);
 
 const _DEFAULT_DATE_FORMAT = "yyyy-MM-dd";
 const _DEFAULT_PADDING = const EdgeInsets.all(8.0);
 
 class SmartTable<T> extends StatefulWidget {
   final DataSource<T> dataSource;
-  final SmartTableOptions options;
+  final SmartTableOptions<T> options;
 
   final OnControllerCreated? onControllerCreated;
   final OnTableError? onTableError;
+  final OnAddNewElement<T>? onAddNewElement;
+  final OnRemoveElement<T>? onRemoveElement;
+  final OnRowTap<T>? onRowTap;
   final int? pageSize;
 
   final Map<String, RowCellBuilder<T?>> rows;
 
-  const SmartTable({Key? key, required this.dataSource, required this.options, this.onControllerCreated, this.onTableError, this.pageSize, required this.rows}) : super(key: key);
+  const SmartTable({Key? key, required this.dataSource, required this.options, this.onControllerCreated, this.onTableError, this.pageSize, required this.rows, this.onAddNewElement, this.onRemoveElement, this.onRowTap}) : super(key: key);
 
   @override
   State<SmartTable<T>> createState() => _SmartTableState<T>();
@@ -102,13 +111,16 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
    // final rowsLength = _tableController.tableData.value?.filterResponse.content.length ?? 0;
 
     final borderAll = Border(top: outerBorderSide, bottom: innerBorderSide, right: innerBorderSide, left: outerBorderSide);
-    final borderWithoutLeftSide = Border(top: outerBorderSide, bottom: innerBorderSide, right: outerBorderSide);
+    final borderAllButRightOuter = Border(top: outerBorderSide, bottom: innerBorderSide, right: outerBorderSide, left: outerBorderSide);
+    final borderWithoutLeftSide = Border(top: outerBorderSide, bottom: innerBorderSide, right: innerBorderSide);
 
     if (columnsLength == 1) return borderAll;
     if (columnsLength == 2) {
-      return index == 0 ? borderAll : borderWithoutLeftSide;
+      return index == 0 ? borderAll : borderAllButRightOuter;
     } else {
-      return index != 0 && index + 1 != columnsLength ? borderWithoutLeftSide : borderAll;
+      if(index == 0) return borderAll;
+      if(index + 1 == columnsLength) return borderAllButRightOuter;
+      return borderWithoutLeftSide;
     }
   }
 
@@ -165,13 +177,14 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        SmartTableHeader<T>(tableController: _tableController, smartTableDecoration: decoration, onAddNewElement: widget.onAddNewElement),
         Obx(
           () => Row(
             children: widget.options.columns.indexedMap((c, i) => _buildCell(c.title, c, _getHeaderCellBorder(i))).toList(),
           ),
         ),
         Row(
-          children: widget.options.columns.indexedMap((c, i) => _buildCell(null, c, _getRowCellBorder(i, false), rowCellBuilder: (_) => _generateSearchWidgetForColumn(c))).toList(),
+          children: widget.options.columns.indexedMap((c, i) => _buildCell(null, c, _getHeaderCellBorder(i), rowCellBuilder: (_) => _generateSearchWidgetForColumn(c))).toList(),
         ),
         Expanded(
           child: Container(
@@ -184,15 +197,26 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
             child: Obx(
               () => _tableController.tableData.value == null
                   ? Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)))
-                  : ListView(
+                  : _tableController.tableData.value?.filterResponse.totalCount == 0 ? const Align(
+                  alignment: Alignment.center,
+                  child: Text("Nincs találat!")) : ListView(
                       children: [
-                        ..._tableController.tableData.value!.filterResponse.content.indexedMap((e, rowIndex) => Row(
-                              children: [
-                                ...widget.options.columns.indexedMap((c, i) {
-                                  return _buildCell(e, c, _getRowCellBorder(i, true), rowCellBuilder: widget.rows[c.name]);
-                                }),
-                              ],
-                            ))
+                        ..._tableController.tableData.value!.filterResponse.content.indexedMap((e, rowIndex) => Material(
+                          child: InkWell(
+                            onTap: widget.onRowTap == null ? null : () => widget.onRowTap!(e),
+                            onLongPress: widget.onRemoveElement == null ? null : () async{
+                              final result = await showAnimatedDialog(context: context, builder: (context) => RemoveDialog(removeElement:  widget.options.itemToString == null ? e.toString() : widget.options.itemToString!(e)), animationType: DialogTransitionType.scale);
+                              if(result == true) widget.onRemoveElement!(e);
+                              },
+                            child: Row(
+                                  children: [
+                                    ...widget.options.columns.indexedMap((c, i) {
+                                      return _buildCell(e, c, _getRowCellBorder(i, true), rowCellBuilder: widget.rows[c.name]);
+                                    }),
+                                  ],
+                                ),
+                          ),
+                        ))
                       ],
                     ),
             ),
@@ -270,3 +294,29 @@ class SmartTableFooter extends StatelessWidget {
     });
   }
 }
+
+class SmartTableHeader<T> extends StatelessWidget {
+  final SmartTableController tableController;
+  final SmartTableDecoration? smartTableDecoration;
+  final OnAddNewElement<T>? onAddNewElement;
+
+  const SmartTableHeader({Key? key, required this.tableController, this.smartTableDecoration, this.onAddNewElement}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        children: [
+          TextButton.icon(
+              icon: Icon(Icons.add, color: smartTableDecoration?.headerOptions?.addNewButtonIconColor),
+              onPressed: onAddNewElement == null ? null : () async{
+            final newElement = await onAddNewElement!();
+            await tableController.refreshTable();
+          }, label: Text(smartTableDecoration?.headerOptions?.addNewButtonLabel ?? "Új elem hozzáadása"))
+        ],
+      ),
+    );
+  }
+}
+

@@ -42,6 +42,7 @@ class SmartTableController<T> extends GetxController{
         data = dataToLoad;
       } else {
         final newFilterData = _tableFilterData.value.copyWith(page: page);
+        _tableFilterData.value = newFilterData;
         data = await dataSource.getData(_tableFilterData.value);
       }
       tableData.value = TableData(data);
@@ -101,4 +102,10 @@ class SmartTableController<T> extends GetxController{
       await _loadDataToTable(page: 0, dataToLoad: filteredData);
       setPage(TablePageData.fromPage(filterData.page));
   }
+
+  Future<void> refreshTable() async {
+    tableData.value = null;
+    await _loadDataToTable(page: currentTablePage.value.page);
+  }
+
 }

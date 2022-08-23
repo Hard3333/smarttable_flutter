@@ -36,11 +36,12 @@ class AsyncDataSource<T> extends DataSource<T>{
   const AsyncDataSource({required this.fetchData});
 }
 
-class SmartTableOptions{
+class SmartTableOptions<T>{
   final List<SmartTableColumn> columns;
   final SmartTableDecoration? smartTableDecoration;
+  final String Function(T item)? itemToString;
 
-  const SmartTableOptions({required this.columns, this.smartTableDecoration});
+  const SmartTableOptions({required this.columns, this.smartTableDecoration, this.itemToString});
 }
 
 class SmartTableDecoration{
@@ -54,9 +55,17 @@ class SmartTableDecoration{
   final BorderSide? innerBorder;
   final SortIconDecoration? sortIconDecoration;
   final FilterDecoration? filterDecoration;
+  final HeaderOptions? headerOptions;
 
-  const SmartTableDecoration({this.color, this.image, this.borderRadius, this.boxShadow, this.gradient, this.outerBorder, this.innerBorder, this.sortIconDecoration, this.filterDecoration});
+  const SmartTableDecoration({this.color, this.image, this.borderRadius, this.boxShadow, this.gradient, this.outerBorder, this.innerBorder, this.sortIconDecoration, this.filterDecoration, this.headerOptions});
 
+}
+
+class HeaderOptions{
+  final String? addNewButtonLabel;
+  final Color? addNewButtonIconColor;
+
+  HeaderOptions({this.addNewButtonLabel, this.addNewButtonIconColor});
 }
 
 class FilterDecoration{

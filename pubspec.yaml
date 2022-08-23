@@ -18,6 +18,7 @@ dev_dependencies:
   get: 4.6.5
   font_awesome_flutter: 10.1.0
   intl: 0.17.0
+  flutter_animated_dialog: 2.0.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
