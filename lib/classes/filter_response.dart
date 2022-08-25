@@ -1,7 +1,7 @@
 class FilterResponse<T>{
   final List<T> content;
   final int page;
-  final double totalCount;
+  final int totalCount;
 
   const FilterResponse({required this.content,required this.page,required this.totalCount});
 

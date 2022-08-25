@@ -11,6 +11,7 @@ import 'package:smart_table_flutter/core/smart_table_controller.dart';
 import 'package:smart_table_flutter/core/utils.dart';
 import 'package:flutter_animated_dialog/flutter_animated_dialog.dart';
 export 'package:smart_table_flutter/classes/classes.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 
 typedef OnControllerCreated = Function(SmartTableController smartTableController);
 typedef OnAddNewElement<T> = FutureOr<T?> Function();
@@ -65,7 +66,10 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
       switch (column.columnType) {
         case ColumnType.STRING:
         case ColumnType.NUMERIC:
-          return Text(value.toString());
+          return AutoSizeText(value.toString(), maxLines: 1, overflowReplacement: Tooltip(
+            message: value.toString(),
+            child: Text(value.toString(), overflow: TextOverflow.ellipsis, maxLines: 1),
+          ));
         case ColumnType.BOOLEAN:
           return Icon((value as bool) ? Icons.check : Icons.close, color: value ? Colors.green : Colors.redAccent);
         case ColumnType.DATE:
@@ -92,14 +96,14 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
     return Expanded(
       flex: column.weight,
       child: Container(
+          height: 40,
           padding: _DEFAULT_PADDING,
           decoration: BoxDecoration(border: cellBorder),
           child: rowCellBuilder != null
               ? rowCellBuilder(value)
               : Row(
                   children: [
-                    _getWidget(),
-                    const Spacer(),
+                    Expanded(child: _getWidget()),
                     if (column.sortEnabled) Material(child: InkWell(onTap: () => _tableController.applySort(column), child: _getSortIcon())),
                   ],
                 )),
