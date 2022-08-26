@@ -15,8 +15,9 @@ class SmartTableSortTextField extends StatefulWidget {
   final TextInputType? textInputType;
   final Color? borderColor;
   final bool inverseBgColor;
+  final Icon? suffixIcon;
 
-  const SmartTableSortTextField({Key? key, this.enabled = true, this.controller, this.hintText, this.obscureText = false, this.onChanged, this.maxLines, this.bgColor, this.decoration, this.textInputType, this.borderColor, this.inverseBgColor = false}) : super(key: key);
+  const SmartTableSortTextField({Key? key, this.enabled = true, this.controller, this.hintText, this.obscureText = false, this.onChanged, this.maxLines, this.bgColor, this.decoration, this.textInputType, this.borderColor, this.inverseBgColor = false, this.suffixIcon}) : super(key: key);
 
   @override
   _SmartTableSortTextFieldState createState() => _SmartTableSortTextFieldState();
@@ -63,6 +64,7 @@ class _SmartTableSortTextFieldState extends State<SmartTableSortTextField> {
             filled: true,
             contentPadding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 0.0),
             hintText: widget.hintText,
+            suffixIcon: widget.suffixIcon,
             hintStyle: Theme.of(context).textTheme.bodySmall!.copyWith(color: Colors.grey),
             disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: BorderSide(color: Theme.of(context).canvasColor)),
             enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: BorderSide(color: controller.text != "" ? Theme.of(context).primaryColor : (widget.borderColor ?? Theme.of(context).canvasColor))),

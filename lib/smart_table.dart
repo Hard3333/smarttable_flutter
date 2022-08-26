@@ -6,6 +6,8 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:smart_table_flutter/classes/classes.dart';
 import 'package:smart_table_flutter/common/remove_dialog.dart';
+import 'package:smart_table_flutter/common/smart_table_date_range_picker.dart';
+import 'package:smart_table_flutter/common/smart_table_sort_checkbox.dart';
 import 'package:smart_table_flutter/common/smart_table_sort_text_field.dart';
 import 'package:smart_table_flutter/core/smart_table_controller.dart';
 import 'package:smart_table_flutter/core/utils.dart';
@@ -53,7 +55,6 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
     _tableController.init();
   }
 
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -61,20 +62,12 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
     innerBorderSide = widget.options.smartTableDecoration?.innerBorder ?? BorderSide(color:Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black);
   }
 
-  Widget _buildCell(dynamic value, SmartTableColumn column, Border cellBorder, {RowCellBuilder<T?>? rowCellBuilder}) {
-    Widget _getWidget() {
-      switch (column.columnType) {
-        case ColumnType.STRING:
-        case ColumnType.NUMERIC:
-          return AutoSizeText(value.toString(), maxLines: 1, overflowReplacement: Tooltip(
-            message: value.toString(),
-            child: Text(value.toString(), overflow: TextOverflow.ellipsis, maxLines: 1),
-          ));
-        case ColumnType.BOOLEAN:
-          return Icon((value as bool) ? Icons.check : Icons.close, color: value ? Colors.green : Colors.redAccent);
-        case ColumnType.DATE:
-          return Text(DateFormat(_DEFAULT_DATE_FORMAT).format(value as DateTime));
-      }
+  Widget _buildCell(dynamic value, SmartTableColumn column, Border cellBorder, {RowCellBuilder<T?>? rowCellBuilder, bool isSortRow = false}) {
+    Widget _getHeaderWidget() {
+      return AutoSizeText(value.toString(), maxLines: 1, overflowReplacement: Tooltip(
+        message: value.toString(),
+        child: Text(value.toString(), overflow: TextOverflow.ellipsis, maxLines: 1),
+      ));
     }
 
     Icon _getSortIcon() {
@@ -96,14 +89,14 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
     return Expanded(
       flex: column.weight,
       child: Container(
-          height: 40,
+          height: isSortRow ? 60 : 40,
           padding: _DEFAULT_PADDING,
           decoration: BoxDecoration(border: cellBorder),
           child: rowCellBuilder != null
               ? rowCellBuilder(value)
               : Row(
                   children: [
-                    Expanded(child: _getWidget()),
+                    Expanded(child: _getHeaderWidget()),
                     if (column.sortEnabled) Material(child: InkWell(onTap: () => _tableController.applySort(column), child: _getSortIcon())),
                   ],
                 )),
@@ -147,13 +140,13 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
     }
   }
 
-  void _handleFilterTextFieldChange(SmartTableColumn column, String filterValue) {
+  void _handleFilterChange(SmartTableColumn column, dynamic filterValue) {
     final Map<String, dynamic> filterMap = {column.name: filterValue};
     _tableController.applyFilter(filterMap);
   }
 
   Widget _generateSearchWidgetForColumn(SmartTableColumn column) {
-    if(!column.filterEnabled) return Container(height: 40);
+    if(!column.filterEnabled) return Container(height: 50);
     final inputDecoration = InputDecoration(
         fillColor: widget.options.smartTableDecoration?.filterDecoration?.filterTextFieldDecoration?.fillColor ?? Theme.of(context).canvasColor,
         filled: true,
@@ -165,12 +158,13 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
 
     switch (column.columnType) {
       case ColumnType.STRING:
-        return SmartTableSortTextField(onChanged: (newValue) => _handleFilterTextFieldChange(column, newValue), decoration: inputDecoration, enabled: column.filterEnabled);
+        return SmartTableSortTextField(onChanged: (newValue) => _handleFilterChange(column, newValue), decoration: inputDecoration, enabled: column.filterEnabled);
       case ColumnType.NUMERIC:
-        return SmartTableSortTextField(textInputType: TextInputType.number, onChanged: (newValue) => _handleFilterTextFieldChange(column, newValue), decoration: inputDecoration, enabled: column.filterEnabled);
+        return SmartTableSortTextField(textInputType: TextInputType.number, onChanged: (newValue) => _handleFilterChange(column, newValue), decoration: inputDecoration, enabled: column.filterEnabled);
       case ColumnType.DATE:
+        return SmartTableDateRangePicker(onValueChanged: (MapEntry<DateTime, DateTime> value) => _handleFilterChange(column, value));
       case ColumnType.BOOLEAN:
-        return const Text("FilterWidget");
+        return SmartTableSortCheckbox(onChanged: (bool value) => _handleFilterChange(column, value));
     }
   }
 
@@ -188,7 +182,7 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
           ),
         ),
         Row(
-          children: widget.options.columns.indexedMap((c, i) => _buildCell(null, c, _getHeaderCellBorder(i), rowCellBuilder: (_) => _generateSearchWidgetForColumn(c))).toList(),
+          children: widget.options.columns.indexedMap((c, i) => _buildCell(null, c, _getHeaderCellBorder(i), rowCellBuilder: (_) => _generateSearchWidgetForColumn(c), isSortRow: true)).toList(),
         ),
         Expanded(
           child: Container(
