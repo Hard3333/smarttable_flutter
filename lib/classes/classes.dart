@@ -89,7 +89,8 @@ class SmartTableColumn{
   final bool sortEnabled;
   final ColumnType columnType;
   final ColumnSortType columnSortType;
-  final int weight;
+  final Alignment alignment;
+  final double? columnWidth;
 
   SmartTableColumn({
     required this.name,
@@ -99,13 +100,14 @@ class SmartTableColumn{
     this.sortEnabled = true,
     this.columnType = ColumnType.STRING,
     this.columnSortType = ColumnSortType.NONE,
-    this.weight = 1
+    this.columnWidth,
+    this.alignment = Alignment.centerLeft
   });
 
   SmartTableColumn copyWith({ColumnSortType? columnSortType}) => SmartTableColumn(
       name: this.name,
       title: this.title,
-      weight: this.weight,
+      columnWidth: this.columnWidth,
       columnType: this.columnType,
       filterEnabled: this.filterEnabled,
       filterHintText: this.filterHintText,
