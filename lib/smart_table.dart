@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:smart_table_flutter/classes/classes.dart';
 import 'package:smart_table_flutter/common/remove_dialog.dart';
 import 'package:smart_table_flutter/common/smart_table_date_range_picker.dart';
@@ -14,6 +13,8 @@ import 'package:smart_table_flutter/core/utils.dart';
 import 'package:flutter_animated_dialog/flutter_animated_dialog.dart';
 export 'package:smart_table_flutter/classes/classes.dart';
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:smart_table_flutter/extensions/focused_menu/focused_menu.dart';
+import 'package:smart_table_flutter/extensions/focused_menu/modals.dart';
 
 typedef OnControllerCreated = Function(SmartTableController smartTableController);
 typedef OnAddNewElement<T> = FutureOr<T?> Function();
@@ -31,7 +32,7 @@ class SmartTable<T> extends StatefulWidget {
   final OnTableError? onTableError;
   final OnAddNewElement<T>? onAddNewElement;
   final OnRemoveElement<T>? onRemoveElement;
-  final OnRowTap<T>? onRowTap;
+  final OnRowTap<T>? onElementModify;
   final int? pageSize;
 
   final Map<String, RowCellBuilder<T?>> rows;
@@ -46,7 +47,7 @@ class SmartTable<T> extends StatefulWidget {
       required this.rows,
       this.onAddNewElement,
       this.onRemoveElement,
-      this.onRowTap})
+      this.onElementModify})
       : super(key: key);
 
   @override
@@ -209,65 +210,102 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
                     scrollDirection: Axis.horizontal,
                     controller: _horizontalScrollController,
                     child: Column(
-                    children: [
-                      Obx(
-                        () => Row(
-                          children: widget.options.columns.indexedMap((c, i) => _buildCell(c.title, c, _getHeaderCellBorder(i), _defaultColumnWidth)).toList(),
+                      children: [
+                        Obx(
+                          () => Row(
+                            children: widget.options.columns.indexedMap((c, i) {
+                              final columnWidthWithWeight = _defaultColumnWidth * (c.weight ?? 1);
+                              return _buildCell(c.title, c, _getHeaderCellBorder(i), columnWidthWithWeight);
+                            }).toList(),
+                          ),
                         ),
-                      ),
-                      Row(
-                        children: widget.options.columns
-                            .indexedMap((c, i) => _buildCell(null, c, _getHeaderCellBorder(i), _defaultColumnWidth, rowCellBuilder: (_) => _generateSearchWidgetForColumn(c), isSortRow: true))
-                            .toList(),
-                      ),
-                      SizedBox(
-                        height: constraints.maxHeight - (_headerHeight + _footerHeight + 100),
-                       // width: constraints.maxWidth,
-                        child: SingleChildScrollView(
-                            controller: _verticalScrollController,
-                            scrollDirection: Axis.vertical, child: Container(
-                            decoration: BoxDecoration(
-                                color: decoration?.color,
-                                boxShadow: decoration?.boxShadow,
-                                gradient: decoration?.gradient,
-                                image: decoration?.image,
-                                border: Border(left: outerBorderSide, right: outerBorderSide, bottom: innerBorderSide)),
-                            child: Obx(
-                              () => _tableController.tableData.value == null
-                                  ? Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)))
-                                  : _tableController.tableData.value?.filterResponse.totalCount == 0
-                                      ? const Align(alignment: Alignment.center, child: Text("Nincs találat!"))
-                                      : Column(
-                                          children: [
-                                            ..._tableController.tableData.value!.filterResponse.content.indexedMap((e, rowIndex) => Material(
-                                                  child: InkWell(
-                                                    onTap: widget.onRowTap == null ? null : () => widget.onRowTap!(e),
-                                                    onLongPress: widget.onRemoveElement == null
-                                                        ? null
-                                                        : () async {
-                                                            final result = await showAnimatedDialog(
-                                                                context: context,
-                                                                builder: (context) =>
-                                                                    RemoveDialog(removeElement: widget.options.itemToString == null ? e.toString() : widget.options.itemToString!(e)),
-                                                                animationType: DialogTransitionType.scale);
-                                                            if (result == true) widget.onRemoveElement!(e);
-                                                          },
-                                                    child: Row(
-                                                      children: [
-                                                        ...widget.options.columns.indexedMap((c, i) {
-                                                          return _buildCell(e, c, _getRowCellBorder(i, true), _defaultColumnWidth, rowCellBuilder: widget.rows[c.name]);
-                                                        }),
-                                                      ],
-                                                    ),
-                                                  ),
+                        Row(
+                          children: widget.options.columns.indexedMap((c, i) {
+                            final columnWidthWithWeight = _defaultColumnWidth * (c.weight ?? 1);
+                            return _buildCell(null, c, _getHeaderCellBorder(i), columnWidthWithWeight, rowCellBuilder: (_) => _generateSearchWidgetForColumn(c), isSortRow: true);
+                          }).toList(),
+                        ),
+                        SizedBox(
+                          height: constraints.maxHeight - (_headerHeight + _footerHeight + 100),
+                          // width: constraints.maxWidth,
+                          child: SingleChildScrollView(
+                              controller: _verticalScrollController,
+                              scrollDirection: Axis.vertical,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                    color: decoration?.color,
+                                    boxShadow: decoration?.boxShadow,
+                                    gradient: decoration?.gradient,
+                                    image: decoration?.image,
+                                    border: Border(left: outerBorderSide, right: outerBorderSide, bottom: innerBorderSide)),
+                                child: Obx(
+                                  () => _tableController.tableData.value == null
+                                      ? Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)))
+                                      : _tableController.tableData.value?.filterResponse.totalCount == 0
+                                          ? const Align(alignment: Alignment.center, child: Text("Nincs találat!"))
+                                          : Column(
+                                              children: [
+                                                ..._tableController.tableData.value!.filterResponse.content.indexedMap((e, rowIndex) => Material(
+                                                  child: FocusedMenuHolder(
+                                                        openWithTap: true,
+                                                        blurSize: 1,
+                                                        menuWidth: constraints.maxWidth,
+                                                        menuOffset: 8,
+                                                        menuBoxDecoration: BoxDecoration(
+                                                          color: const Color.fromARGB(255, 242, 242, 242),
+                                                          borderRadius: BorderRadius.circular(8.0)
+                                                        ),
+                                                        onPressed: () {},
+                                                        menuItems: [
+                                                          ...widget.options.customMenuItems,
+                                                          if (widget.onElementModify != null)
+                                                            FocusedMenuItem(
+                                                                onPressed: () async => widget.onElementModify!(e),
+                                                                title: Row(
+                                                                  children: const [
+                                                                    Icon(Icons.edit),
+                                                                    SizedBox(width: 16.0),
+                                                                    Text("Módosítás"),
+                                                                  ],
+                                                                )),
+                                                          if (widget.onRemoveElement != null)
+                                                            FocusedMenuItem(
+                                                                onPressed: () async {
+                                                                  final result = await showAnimatedDialog(
+                                                                      context: context,
+                                                                      builder: (context) =>
+                                                                          RemoveDialog(removeElement: widget.options.itemToString == null ? e.toString() : widget.options.itemToString!(e)),
+                                                                      animationType: DialogTransitionType.scale);
+                                                                  if (result == true) widget.onRemoveElement!(e);
+                                                                },
+                                                                title: Row(
+                                                                  children: const [
+                                                                    Icon(Icons.delete_forever, color: Colors.redAccent),
+                                                                    SizedBox(width: 16.0),
+                                                                    Text("Törlés",style: TextStyle(color: Colors.redAccent)),
+                                                                  ],
+                                                                )),
+
+                                                        ],
+                                                        child: Material(
+                                                          child: Row(
+                                                            children: [
+                                                              ...widget.options.columns.indexedMap((c, i) {
+                                                                final columnWidthWithWeight = _defaultColumnWidth * (c.weight ?? 1);
+                                                                return _buildCell(e, c, _getRowCellBorder(i, true), columnWidthWithWeight, rowCellBuilder: widget.rows[c.name]);
+                                                              }),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
                                                 )),
-                                          ],
-                                        ),
-                            ),
-                          )),
-                      ),
-                    ],
-                  )),
+                                              ],
+                                            ),
+                                ),
+                              )),
+                        ),
+                      ],
+                    )),
               ),
             ),
             SizedBox(height: _footerHeight, child: SmartTableFooter(tableController: _tableController, smartTableDecoration: decoration))

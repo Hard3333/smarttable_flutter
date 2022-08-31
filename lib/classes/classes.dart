@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:smart_table_flutter/classes/filter_response.dart';
+import 'package:smart_table_flutter/extensions/focused_menu/modals.dart';
 
 typedef GetData<T> = Future<FilterResponse<T>> Function(TableFilterData tableFilterData);
 typedef ColumnHeaderBuilder = Widget Function();
@@ -40,8 +41,9 @@ class SmartTableOptions<T>{
   final List<SmartTableColumn> columns;
   final SmartTableDecoration? smartTableDecoration;
   final String Function(T item)? itemToString;
+  final List<FocusedMenuItem> customMenuItems;
 
-  const SmartTableOptions({required this.columns, this.smartTableDecoration, this.itemToString});
+  const SmartTableOptions({required this.columns, this.smartTableDecoration, this.itemToString, this.customMenuItems = const []});
 }
 
 class SmartTableDecoration{
@@ -91,6 +93,7 @@ class SmartTableColumn{
   final ColumnSortType columnSortType;
   final Alignment alignment;
   final double? columnWidth;
+  final int? weight;
 
   SmartTableColumn({
     required this.name,
@@ -101,7 +104,8 @@ class SmartTableColumn{
     this.columnType = ColumnType.STRING,
     this.columnSortType = ColumnSortType.NONE,
     this.columnWidth,
-    this.alignment = Alignment.centerLeft
+    this.alignment = Alignment.centerLeft,
+    this.weight
   });
 
   SmartTableColumn copyWith({ColumnSortType? columnSortType}) => SmartTableColumn(
