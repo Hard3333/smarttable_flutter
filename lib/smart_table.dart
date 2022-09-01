@@ -16,7 +16,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:smart_table_flutter/extensions/focused_menu/focused_menu.dart';
 import 'package:smart_table_flutter/extensions/focused_menu/modals.dart';
 
-typedef OnControllerCreated = Function(SmartTableController smartTableController);
+typedef OnControllerCreated<T> = Function(SmartTableController<T> smartTableController);
 typedef OnAddNewElement<T> = FutureOr<T?> Function();
 typedef OnRemoveElement<T> = Function(T element);
 typedef OnRowTap<T> = Function(T element);
@@ -28,7 +28,7 @@ class SmartTable<T> extends StatefulWidget {
   final DataSource<T> dataSource;
   final SmartTableOptions<T> options;
 
-  final OnControllerCreated? onControllerCreated;
+  final OnControllerCreated<T>? onControllerCreated;
   final OnTableError? onTableError;
   final OnAddNewElement<T>? onAddNewElement;
   final OnRemoveElement<T>? onRemoveElement;
@@ -65,6 +65,7 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
     super.initState();
     _tableController = SmartTableController<T>(dataSource: widget.dataSource, onTableError: widget.onTableError, pageSize: widget.pageSize);
     _tableController.init();
+    if(widget.onControllerCreated != null) widget.onControllerCreated!(_tableController);
   }
 
   @override
@@ -245,60 +246,58 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
                                           ? const Align(alignment: Alignment.center, child: Text("Nincs találat!"))
                                           : Column(
                                               children: [
-                                                ..._tableController.tableData.value!.filterResponse.content.indexedMap((e, rowIndex) => Material(
-                                                  child: FocusedMenuHolder(
-                                                        openWithTap: true,
-                                                        blurSize: 1,
-                                                        menuWidth: constraints.maxWidth,
-                                                        menuOffset: 8,
-                                                        menuBoxDecoration: BoxDecoration(
-                                                          color: const Color.fromARGB(255, 242, 242, 242),
-                                                          borderRadius: BorderRadius.circular(8.0)
-                                                        ),
-                                                        onPressed: () {},
-                                                        menuItems: [
-                                                          ...widget.options.customMenuItems,
-                                                          if (widget.onElementModify != null)
-                                                            FocusedMenuItem(
-                                                                onPressed: () async => widget.onElementModify!(e),
-                                                                title: Row(
-                                                                  children: const [
-                                                                    Icon(Icons.edit),
-                                                                    SizedBox(width: 16.0),
-                                                                    Text("Módosítás"),
-                                                                  ],
-                                                                )),
-                                                          if (widget.onRemoveElement != null)
-                                                            FocusedMenuItem(
-                                                                onPressed: () async {
-                                                                  final result = await showAnimatedDialog(
-                                                                      context: context,
-                                                                      builder: (context) =>
-                                                                          RemoveDialog(removeElement: widget.options.itemToString == null ? e.toString() : widget.options.itemToString!(e)),
-                                                                      animationType: DialogTransitionType.scale);
-                                                                  if (result == true) widget.onRemoveElement!(e);
-                                                                },
-                                                                title: Row(
-                                                                  children: const [
-                                                                    Icon(Icons.delete_forever, color: Colors.redAccent),
-                                                                    SizedBox(width: 16.0),
-                                                                    Text("Törlés",style: TextStyle(color: Colors.redAccent)),
-                                                                  ],
-                                                                )),
+                                                ..._tableController.tableData.value!.filterResponse.content.indexedMap((e, rowIndex) => FocusedMenuHolder(
+                                                      openWithTap: true,
+                                                      blurSize: 1,
+                                                      menuWidth: constraints.maxWidth,
+                                                      menuOffset: 8,
+                                                      menuBoxDecoration: BoxDecoration(
+                                                        color: const Color.fromARGB(255, 242, 242, 242),
+                                                        borderRadius: BorderRadius.circular(8.0)
+                                                      ),
+                                                      onPressed: () {},
+                                                      menuItems: [
+                                                        if(widget.options.customMenuItemsBuilder != null) ...widget.options.customMenuItemsBuilder!(e),
+                                                        if (widget.onElementModify != null)
+                                                          FocusedMenuItem(
+                                                              onPressed: () async => widget.onElementModify!(e),
+                                                              title: Row(
+                                                                children: const [
+                                                                  Icon(Icons.edit),
+                                                                  SizedBox(width: 16.0),
+                                                                  Text("Módosítás"),
+                                                                ],
+                                                              )),
+                                                        if (widget.onRemoveElement != null)
+                                                          FocusedMenuItem(
+                                                              onPressed: () async {
+                                                                final result = await showAnimatedDialog(
+                                                                    context: context,
+                                                                    builder: (context) =>
+                                                                        RemoveDialog(removeElement: widget.options.itemToString == null ? e.toString() : widget.options.itemToString!(e)),
+                                                                    animationType: DialogTransitionType.scale);
+                                                                if (result == true) widget.onRemoveElement!(e);
+                                                              },
+                                                              title: Row(
+                                                                children: const [
+                                                                  Icon(Icons.delete_forever, color: Colors.redAccent),
+                                                                  SizedBox(width: 16.0),
+                                                                  Text("Törlés",style: TextStyle(color: Colors.redAccent)),
+                                                                ],
+                                                              )),
 
-                                                        ],
-                                                        child: Material(
-                                                          child: Row(
-                                                            children: [
-                                                              ...widget.options.columns.indexedMap((c, i) {
-                                                                final columnWidthWithWeight = _defaultColumnWidth * (c.weight ?? 1);
-                                                                return _buildCell(e, c, _getRowCellBorder(i, true), columnWidthWithWeight, rowCellBuilder: widget.rows[c.name]);
-                                                              }),
-                                                            ],
-                                                          ),
+                                                      ],
+                                                      child: Material(
+                                                        child: Row(
+                                                          children: [
+                                                            ...widget.options.columns.indexedMap((c, i) {
+                                                              final columnWidthWithWeight = _defaultColumnWidth * (c.weight ?? 1);
+                                                              return _buildCell(e, c, _getRowCellBorder(i, true), columnWidthWithWeight, rowCellBuilder: widget.rows[c.name]);
+                                                            }),
+                                                          ],
                                                         ),
                                                       ),
-                                                )),
+                                                    )),
                                               ],
                                             ),
                                 ),

@@ -41,9 +41,9 @@ class SmartTableOptions<T>{
   final List<SmartTableColumn> columns;
   final SmartTableDecoration? smartTableDecoration;
   final String Function(T item)? itemToString;
-  final List<FocusedMenuItem> customMenuItems;
+  final List<FocusedMenuItem> Function(T item)? customMenuItemsBuilder;
 
-  const SmartTableOptions({required this.columns, this.smartTableDecoration, this.itemToString, this.customMenuItems = const []});
+  const SmartTableOptions({required this.columns, this.smartTableDecoration, this.itemToString, this.customMenuItemsBuilder});
 }
 
 class SmartTableDecoration{
