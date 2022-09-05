@@ -17,6 +17,7 @@ class FocusedMenuHolder extends StatefulWidget {
   final double? menuOffset;
   /// Open with tap insted of long press.
   final bool openWithTap;
+  final Color? backgroundColor;
 
   const FocusedMenuHolder(
       {Key? key,
@@ -32,7 +33,8 @@ class FocusedMenuHolder extends StatefulWidget {
       this.menuWidth,
       this.bottomOffsetHeight,
       this.menuOffset,
-      this.openWithTap = false})
+      this.openWithTap = false,this.backgroundColor
+      })
       : super(key: key);
 
   @override
@@ -59,7 +61,7 @@ class _FocusedMenuHolderState extends State<FocusedMenuHolder> {
     return Card(
       elevation: 0.0,
       margin: const EdgeInsets.all(0.0),
-      color: Colors.transparent,
+      color: widget.backgroundColor ?? Colors.transparent,
       child: InkWell(
           key: containerKey,
           onTap: () async {
@@ -227,6 +229,7 @@ class FocusedMenuDetails extends StatelessWidget {
             ),
           ),
           Positioned(top: childOffset.dy, left: childOffset.dx, child: AbsorbPointer(absorbing: true, child: Container(
+              color: Theme.of(context).scaffoldBackgroundColor,
               width: childSize!.width,
               height: childSize!.height,
               child: child))),

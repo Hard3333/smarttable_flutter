@@ -58,8 +58,9 @@ class SmartTableDecoration{
   final SortIconDecoration? sortIconDecoration;
   final FilterDecoration? filterDecoration;
   final HeaderOptions? headerOptions;
+  final Color? secondaryRowColor;
 
-  const SmartTableDecoration({this.color, this.image, this.borderRadius, this.boxShadow, this.gradient, this.outerBorder, this.innerBorder, this.sortIconDecoration, this.filterDecoration, this.headerOptions});
+  const SmartTableDecoration({this.color, this.image, this.borderRadius, this.boxShadow, this.gradient, this.outerBorder, this.innerBorder, this.sortIconDecoration, this.filterDecoration, this.headerOptions, this.secondaryRowColor});
 
 }
 
