@@ -65,10 +65,11 @@ class SmartTableDecoration{
 }
 
 class HeaderOptions{
+  final bool showDisabledAddNewButton;
   final String? addNewButtonLabel;
   final Color? addNewButtonIconColor;
 
-  HeaderOptions({this.addNewButtonLabel, this.addNewButtonIconColor});
+  HeaderOptions({this.addNewButtonLabel, this.addNewButtonIconColor, this.showDisabledAddNewButton = true});
 }
 
 class FilterDecoration{
