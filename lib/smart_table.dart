@@ -264,10 +264,10 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
                                                           FocusedMenuItem(
                                                               onPressed: () async => widget.onElementModify!(e),
                                                               title: Row(
-                                                                children: const [
-                                                                  Icon(Icons.edit),
-                                                                  SizedBox(width: 16.0),
-                                                                  Text("Módosítás"),
+                                                                children: [
+                                                                  Icon(Icons.edit, color: Theme.of(context).primaryColor),
+                                                                  const SizedBox(width: 16.0),
+                                                                  const Text("Módosítás"),
                                                                 ],
                                                               )),
                                                         if (widget.onRemoveElement != null)
