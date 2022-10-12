@@ -16,7 +16,7 @@ abstract class DataSource<T> {
   const DataSource();
 }
 
-Widget _defaultColumnHeaderBuilder() => Text("Nameless Column");
+Widget _defaultColumnHeaderBuilder() => const Text("Nameless Column");
 
 /*
 Widget _defaultColumnHeaderBuilder<T>(T? value, ColumnType columnType) {
@@ -170,7 +170,7 @@ class TablePageData{
 
   const TablePageData({this.page = 0});
 
-  factory TablePageData.first() => TablePageData(page: 0);
+  factory TablePageData.first() => const TablePageData(page: 0);
   factory TablePageData.fromPage(int newPage) => TablePageData(page: newPage);
 }
 

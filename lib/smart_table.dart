@@ -171,10 +171,8 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 0.0),
         hintText: column.filterOptions.filterHintText ?? column.title,
         hintStyle: Theme.of(context).textTheme.bodySmall!.copyWith(color: Colors.grey),
-        enabledBorder: widget.options.smartTableDecoration?.filterDecoration?.filterTextFieldDecoration?.enabledBorder ??
-            OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: const BorderSide(color: Colors.black)),
-        focusedBorder: widget.options.smartTableDecoration?.filterDecoration?.filterTextFieldDecoration?.focusedBorder ??
-            OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: BorderSide(color: Theme.of(context).primaryColor)));
+        enabledBorder: widget.options.smartTableDecoration?.filterDecoration?.filterTextFieldDecoration?.enabledBorder ?? OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: const BorderSide(color: Colors.black)),
+        focusedBorder: widget.options.smartTableDecoration?.filterDecoration?.filterTextFieldDecoration?.focusedBorder ?? OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: BorderSide(color: Theme.of(context).primaryColor)));
 
     switch (column.columnType) {
       case ColumnType.STRING:

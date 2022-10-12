@@ -55,6 +55,7 @@ class DropdownFormField<T> extends StatefulWidget {
 
   final InputDecoration? decoration;
   final Color? dropdownColor;
+  final Color? dropdownBorderColor;
   final DropdownEditingController<T>? controller;
   final void Function(T item)? onChanged;
   final void Function(T?)? onSaved;
@@ -93,7 +94,7 @@ class DropdownFormField<T> extends StatefulWidget {
     this.emptyText = "No matching found!",
     this.emptyActionText = 'Create new',
     this.onEmptyActionPressed,
-    this.selectedFn,
+    this.selectedFn, this.dropdownBorderColor,
   }) : super(key: key);
 
   @override
@@ -199,7 +200,7 @@ class DropdownFormFieldState<T> extends State<DropdownFormField>
             builder: (state) {
               return InputDecorator(
                 decoration: widget.decoration ??
-                    InputDecoration(
+                    const InputDecoration(
                       border: UnderlineInputBorder(),
                       suffixIcon: Icon(Icons.arrow_drop_down),
                     ),
@@ -207,7 +208,7 @@ class DropdownFormFieldState<T> extends State<DropdownFormField>
                 isFocused: _isFocused,
                 child: this._overlayEntry != null
                     ? EditableText(
-                  style: TextStyle(fontSize: 16, color: Colors.black87),
+                  style: const TextStyle(fontSize: 16, color: Colors.black87),
                   controller: _searchTextController,
                   cursorColor: Colors.black87,
                   focusNode: _searchFocusNode,
@@ -220,7 +221,7 @@ class DropdownFormFieldState<T> extends State<DropdownFormField>
                   },
                   onSubmitted: (str) {
                     _searchTextController.value =
-                        TextEditingValue(text: "");
+                        const TextEditingValue(text: "");
                     _setValue();
                     _removeOverlay();
                     _widgetFocusNode.nextFocus();
@@ -248,54 +249,61 @@ class DropdownFormFieldState<T> extends State<DropdownFormField>
           link: this._layerLink,
           showWhenUnlinked: false,
           offset: Offset(0.0, size.height + 3.0),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8.0),
-            child: SizedBox(
-              height: widget.dropdownHeight ?? 240,
-              child: Container(
+          child: SizedBox(
+            height: widget.dropdownHeight ?? 240,
+            child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.rectangle,
+                  border: Border.all(color: widget.dropdownBorderColor ?? Colors.transparent),
                   color: widget.dropdownColor ?? Colors.white70,
-                  child: ValueListenableBuilder(
-                      valueListenable: _listItemsValueNotifier,
-                      builder: (context, List<T> items, child) {
-                        return _options != null && _options!.length > 0
-                            ? ListView.builder(
-                            shrinkWrap: true,
-                            padding: EdgeInsets.zero,
-                            itemCount: _options!.length,
-                            itemBuilder: (context, position) {
-                              T item = _options![position];
-                              Function() onTap = () {
-                                _listItemFocusedPosition = position;
-                                _searchTextController.value =
-                                    TextEditingValue(text: "");
-                                _removeOverlay();
-                                _setValue();
-                              };
-                              Widget listTile = widget.dropdownItemFn(
-                                item,
-                                position,
-                                position == _listItemFocusedPosition,
-                                (widget.selectedFn ?? _selectedFn)(
-                                    _selectedItem, item),
-                                onTap,
-                              );
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                child: ValueListenableBuilder(
+                    valueListenable: _listItemsValueNotifier,
+                    builder: (context, List<T> items, child) {
+                      return _options != null && _options!.length > 0
+                          ? ListView.builder(
+                          shrinkWrap: true,
+                          padding: EdgeInsets.zero,
+                          itemCount: _options!.length,
+                          itemBuilder: (context, position) {
+                            T item = _options![position];
+                            Function() onTap = () {
+                              _listItemFocusedPosition = position;
+                              _searchTextController.value =
+                                  const TextEditingValue(text: "");
+                              _removeOverlay();
+                              _setValue();
+                            };
+                            Widget listTile = widget.dropdownItemFn(
+                              item,
+                              position,
+                              position == _listItemFocusedPosition,
+                              (widget.selectedFn ?? _selectedFn)(
+                                  _selectedItem, item),
+                              onTap,
+                            );
 
-                              return listTile;
-                            })
-                            : Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8.0),
+                            return listTile;
+                          })
+                          : Material(
+                        color: Colors.transparent,
+                            child: Container(
+                   /*     decoration: BoxDecoration(
+                            shape: BoxShape.rectangle,
+                            border: Border.all(color: widget.dropdownBorderColor ?? Colors.transparent),
+                       //   borderRadius: BorderRadius.circular(8.0),
                             color: widget.dropdownColor ?? Colors.white70,
-                          ),
-                          padding: EdgeInsets.all(16),
-                          child: Column(
+                        ),*/
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
                             mainAxisSize: MainAxisSize.max,
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
                                 widget.emptyText,
-                                style: TextStyle(color: Colors.black45),
+                                style: const TextStyle(color: Colors.black45),
                               ),
                               if (widget.onEmptyActionPressed != null)
                                 TextButton(
@@ -307,10 +315,10 @@ class DropdownFormFieldState<T> extends State<DropdownFormField>
                                   child: Text(widget.emptyActionText),
                                 ),
                             ],
-                          ),
-                        );
-                      })),
-            ),
+                        ),
+                      ),
+                          );
+                    })),
           ),
         ),
       );
