@@ -42,7 +42,7 @@ class _SmartTableDropdownFieldState<T> extends State<SmartTableDropdownField<T>>
         emptyText: "Nincs találat",
         emptyActionText: "Létrehozás",
         decoration: InputDecoration(
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: BorderSide(color: Colors.grey)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: const BorderSide(color: Colors.grey)),
             focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: BorderSide(color: Theme.of(context).primaryColor)),
             filled: true,
             contentPadding: const EdgeInsets.only(left: 8.0,right: 8.0,top:8.0),
