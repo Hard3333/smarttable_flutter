@@ -85,12 +85,10 @@ class SortIconDecoration{
   const SortIconDecoration({this.inactiveColor, this.activeColor});
 }
 
-class SmartTableColumn{
+class SmartTableColumn<T>{
   final String name;
   final String title;
-  final String? filterHintText;
-  final bool filterEnabled;
-  final bool sortEnabled;
+  final SmartTableColumnFilterOptions<T> filterOptions;
   final ColumnType columnType;
   final ColumnSortType columnSortType;
   final Alignment alignment;
@@ -100,9 +98,7 @@ class SmartTableColumn{
   SmartTableColumn({
     required this.name,
     required this.title,
-    this.filterHintText,
-    this.filterEnabled = true,
-    this.sortEnabled = true,
+    this.filterOptions = const SmartTableColumnFilterOptions(),
     this.columnType = ColumnType.STRING,
     this.columnSortType = ColumnSortType.NONE,
     this.columnWidth,
@@ -111,19 +107,27 @@ class SmartTableColumn{
   });
 
   SmartTableColumn copyWith({ColumnSortType? columnSortType}) => SmartTableColumn(
-      name: this.name,
-      title: this.title,
-      columnWidth: this.columnWidth,
-      columnType: this.columnType,
-      filterEnabled: this.filterEnabled,
-      filterHintText: this.filterHintText,
-      sortEnabled: this.sortEnabled,
+      name: name,
+      title: title,
+      columnWidth: columnWidth,
+      columnType: columnType,
+      filterOptions: filterOptions,
       columnSortType: columnSortType ?? this.columnSortType
     );
-
 }
 
-enum ColumnType {STRING, NUMERIC, DATE, BOOLEAN}
+class SmartTableColumnFilterOptions<T>{
+  final Future<List<T>> Function(String str)? onFind;
+  final String Function(T item)? itemToString;
+  final bool filterEnabled;
+  final bool sortEnabled;
+  final String? filterHintText;
+  final bool loadFirstItemAutomaticallyInDropdown;
+
+  const SmartTableColumnFilterOptions({this.onFind, this.filterEnabled = false, this.sortEnabled = false, this.filterHintText, this.itemToString, this.loadFirstItemAutomaticallyInDropdown = false});
+}
+
+enum ColumnType {STRING, NUMERIC, DATE, BOOLEAN, DROPDOWN}
 enum ColumnSortType {NONE, ASC, DESC}
 
 class SmartTableRow<T>{
