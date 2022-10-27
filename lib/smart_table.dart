@@ -36,7 +36,7 @@ class SmartTable<T> extends StatefulWidget {
   final OnRowTap<T>? onElementModify;
   final int? pageSize;
 
-  final Map<String, RowCellBuilder<T?>> rows;
+  final Map<String, RowCellBuilder<T>> rows;
 
   const SmartTable(
       {Key? key,
@@ -66,7 +66,7 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
     super.initState();
     _tableController = SmartTableController<T>(dataSource: widget.dataSource, onTableError: widget.onTableError, pageSize: widget.pageSize);
     _tableController.init();
-    if(widget.onControllerCreated != null) widget.onControllerCreated!(_tableController);
+    if (widget.onControllerCreated != null) widget.onControllerCreated!(_tableController);
   }
 
   @override
@@ -76,13 +76,13 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
     innerBorderSide = widget.options.smartTableDecoration?.innerBorder ?? BorderSide(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black);
   }
 
-  Widget _buildCell(dynamic value, SmartTableColumn column, Border cellBorder, double defaultColumnWidth, {RowCellBuilder<T?>? rowCellBuilder, bool isSortRow = false}) {
+  Widget _buildCell(T? value, SmartTableColumn column, Border cellBorder, double defaultColumnWidth, {RowCellBuilder<T>? rowCellBuilder, bool isSearchRow = false}) {
     Widget _getHeaderWidget() {
-      return AutoSizeText(value.toString(),
+      return AutoSizeText(column.title,
           maxLines: 1,
           overflowReplacement: Tooltip(
-            message: value.toString(),
-            child: Text(value.toString(), overflow: TextOverflow.ellipsis, maxLines: 1),
+            message: column.title,
+            child: Text(column.title, overflow: TextOverflow.ellipsis, maxLines: 1),
           ));
     }
 
@@ -104,20 +104,21 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
 
     return Container(
         width: column.columnWidth ?? defaultColumnWidth,
-        height: isSortRow ? 60 : 40,
+        height: isSearchRow ? 60 : 40,
         padding: _DEFAULT_PADDING,
-        decoration: BoxDecoration(
-            border: cellBorder),
+        decoration: BoxDecoration(border: cellBorder),
         child: Align(
           alignment: column.alignment,
           child: rowCellBuilder != null
-              ? rowCellBuilder(value)
-              : Row(
-                  children: [
-                    Expanded(child: _getHeaderWidget()),
-                    if (column.filterOptions.sortEnabled) Material(child: InkWell(onTap: () => _tableController.applySort(column), child: _getSortIcon())),
-                  ],
-                ),
+              ? rowCellBuilder(value!)
+              : isSearchRow
+                  ? _generateSearchWidgetForColumn(column)
+                  : Row(
+                      children: [
+                        Expanded(child: _getHeaderWidget()),
+                        if (column.filterOptions.sortEnabled) Material(child: InkWell(onTap: () => _tableController.applySort(column), child: _getSortIcon())),
+                      ],
+                    ),
         ));
   }
 
@@ -171,24 +172,24 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 0.0),
         hintText: column.filterOptions.filterHintText ?? column.title,
         hintStyle: Theme.of(context).textTheme.bodySmall!.copyWith(color: Colors.grey),
-        enabledBorder: widget.options.smartTableDecoration?.filterDecoration?.filterTextFieldDecoration?.enabledBorder ?? OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: const BorderSide(color: Colors.black)),
-        focusedBorder: widget.options.smartTableDecoration?.filterDecoration?.filterTextFieldDecoration?.focusedBorder ?? OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: BorderSide(color: Theme.of(context).primaryColor)));
+        enabledBorder: widget.options.smartTableDecoration?.filterDecoration?.filterTextFieldDecoration?.enabledBorder ??
+            OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: const BorderSide(color: Colors.black)),
+        focusedBorder: widget.options.smartTableDecoration?.filterDecoration?.filterTextFieldDecoration?.focusedBorder ??
+            OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: BorderSide(color: Theme.of(context).primaryColor)));
 
     switch (column.columnType) {
       case ColumnType.STRING:
         return SmartTableSortTextField(onChanged: (newValue) => _handleFilterChange(column, newValue), decoration: inputDecoration, enabled: column.filterOptions.filterEnabled);
       case ColumnType.NUMERIC:
-        return SmartTableSortTextField(textInputType: TextInputType.number, onChanged: (newValue) => _handleFilterChange(column, newValue), decoration: inputDecoration, enabled: column.filterOptions.filterEnabled);
+        return SmartTableSortTextField(
+            textInputType: TextInputType.number, onChanged: (newValue) => _handleFilterChange(column, newValue), decoration: inputDecoration, enabled: column.filterOptions.filterEnabled);
       case ColumnType.DATE:
         return SmartTableDateRangePicker(onValueChanged: (MapEntry<DateTime, DateTime> value) => _handleFilterChange(column, value));
       case ColumnType.BOOLEAN:
         return SmartTableSortCheckbox(onChanged: (bool value) => _handleFilterChange(column, value));
       case ColumnType.DROPDOWN:
         return SmartTableDropdownField(
-            title: column.title,
-            itemToString: column.filterOptions.itemToString,
-            findFn: column.filterOptions.onFind!,
-            onChanged: (value) => _handleFilterChange(column, value));
+            title: column.title, itemToString: column.filterOptions.itemToString, findFn: column.filterOptions.onFind!, onChanged: (value) => _handleFilterChange(column, value));
     }
   }
 
@@ -210,7 +211,8 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if(widget.onAddNewElement != null || decoration?.headerOptions?.showDisabledAddNewButton == true) SizedBox(height: _headerHeight, child: SmartTableHeader<T>(tableController: _tableController, smartTableDecoration: decoration, onAddNewElement: widget.onAddNewElement)),
+            if (widget.onAddNewElement != null || decoration?.headerOptions?.showDisabledAddNewButton == true)
+              SizedBox(height: _headerHeight, child: SmartTableHeader<T>(tableController: _tableController, smartTableDecoration: decoration, onAddNewElement: widget.onAddNewElement)),
             Expanded(
               child: Scrollbar(
                 controller: _horizontalScrollController,
@@ -223,14 +225,14 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
                           () => Row(
                             children: widget.options.columns.indexedMap((c, i) {
                               final columnWidthWithWeight = defaultColumnWidth * (c.weight ?? 1);
-                              return _buildCell(c.title, c, _getHeaderCellBorder(i), columnWidthWithWeight);
+                              return _buildCell(null, c, _getHeaderCellBorder(i), columnWidthWithWeight);
                             }).toList(),
                           ),
                         ),
                         Row(
                           children: widget.options.columns.indexedMap((c, i) {
                             final columnWidthWithWeight = defaultColumnWidth * (c.weight ?? 1);
-                            return _buildCell(null, c, _getHeaderCellBorder(i), columnWidthWithWeight, rowCellBuilder: (_) => _generateSearchWidgetForColumn(c), isSortRow: true);
+                            return _buildCell(null, c, _getHeaderCellBorder(i), columnWidthWithWeight, isSearchRow: true);
                           }).toList(),
                         ),
                         SizedBox(
@@ -257,14 +259,11 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
                                                       blurSize: 1,
                                                       menuWidth: constraints.maxWidth,
                                                       menuOffset: 8,
-                                                      menuBoxDecoration: BoxDecoration(
-                                                        color: const Color.fromARGB(255, 242, 242, 242),
-                                                        borderRadius: BorderRadius.circular(8.0)
-                                                      ),
+                                                      menuBoxDecoration: BoxDecoration(color: const Color.fromARGB(255, 242, 242, 242), borderRadius: BorderRadius.circular(8.0)),
                                                       onPressed: () {},
                                                       backgroundColor: rowIndex % 2 != 0 ? (decoration?.secondaryRowColor ?? Theme.of(context).scaffoldBackgroundColor) : Theme.of(context).canvasColor,
                                                       menuItems: [
-                                                        if(widget.options.customMenuItemsBuilder != null) ...widget.options.customMenuItemsBuilder!(e),
+                                                        if (widget.options.customMenuItemsBuilder != null) ...widget.options.customMenuItemsBuilder!(e),
                                                         if (widget.onElementModify != null)
                                                           FocusedMenuItem(
                                                               onPressed: () async => widget.onElementModify!(e),
@@ -289,10 +288,9 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
                                                                 children: const [
                                                                   Icon(Icons.delete_forever, color: Colors.redAccent),
                                                                   SizedBox(width: 16.0),
-                                                                  Text("Törlés",style: TextStyle(color: Colors.redAccent)),
+                                                                  Text("Törlés", style: TextStyle(color: Colors.redAccent)),
                                                                 ],
                                                               )),
-
                                                       ],
                                                       child: Row(
                                                         children: [
