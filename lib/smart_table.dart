@@ -266,7 +266,10 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
                                                         if (widget.options.customMenuItemsBuilder != null) ...widget.options.customMenuItemsBuilder!(e),
                                                         if (widget.onElementModify != null)
                                                           FocusedMenuItem(
-                                                              onPressed: () async => widget.onElementModify!(e),
+                                                              onPressed: () async {
+                                                                await widget.onElementModify!(e);
+                                                                _tableController.refreshTable();
+                                                              },
                                                               title: Row(
                                                                 children: [
                                                                   Icon(Icons.edit, color: Theme.of(context).primaryColor),
