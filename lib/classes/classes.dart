@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:smart_table_flutter/classes/filter_response.dart';
 import 'package:smart_table_flutter/extensions/focused_menu/modals.dart';
+import 'package:smart_table_flutter/smart_table.dart';
 
 typedef GetData<T> = Future<FilterResponse<T>> Function(TableFilterData tableFilterData);
 typedef ColumnHeaderBuilder = Widget Function();
@@ -68,8 +69,9 @@ class HeaderOptions{
   final bool showDisabledAddNewButton;
   final String? addNewButtonLabel;
   final Color? addNewButtonIconColor;
+  final CustomHeaderBuilder? customHeaderBuilder;
 
-  HeaderOptions({this.addNewButtonLabel, this.addNewButtonIconColor, this.showDisabledAddNewButton = true});
+  HeaderOptions({this.addNewButtonLabel, this.addNewButtonIconColor, this.showDisabledAddNewButton = true, this.customHeaderBuilder,});
 }
 
 class FilterDecoration{
