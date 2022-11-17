@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:smart_table_flutter/classes/classes.dart';
-import 'package:smart_table_flutter/common/remove_dialog.dart';
 import 'package:smart_table_flutter/common/smart_table_date_picker.dart';
 import 'package:smart_table_flutter/common/smart_table_date_range_picker.dart';
+import 'package:smart_table_flutter/common/smart_table_dialog.dart';
 import 'package:smart_table_flutter/common/smart_table_dropdown_field.dart';
 import 'package:smart_table_flutter/common/smart_table_sort_checkbox.dart';
 import 'package:smart_table_flutter/common/smart_table_sort_text_field.dart';
@@ -14,9 +14,6 @@ import 'package:smart_table_flutter/core/smart_table_controller.dart';
 import 'package:smart_table_flutter/core/utils.dart';
 import 'package:flutter_animated_dialog/flutter_animated_dialog.dart';
 export 'package:smart_table_flutter/classes/classes.dart';
-import 'package:auto_size_text/auto_size_text.dart';
-import 'package:smart_table_flutter/extensions/focused_menu/focused_menu.dart';
-import 'package:smart_table_flutter/extensions/focused_menu/modals.dart';
 
 typedef OnControllerCreated<T> = Function(SmartTableController<T> smartTableController);
 typedef OnAddNewElement<T> = FutureOr<T?> Function();
@@ -30,28 +27,13 @@ const _DEFAULT_PADDING = const EdgeInsets.all(8.0);
 class SmartTable<T> extends StatefulWidget {
   final DataSource<T> dataSource;
   final SmartTableOptions<T> options;
-
   final OnControllerCreated<T>? onControllerCreated;
   final OnTableError? onTableError;
-  final OnAddNewElement<T>? onAddNewElement;
-  final OnRemoveElement<T>? onRemoveElement;
-  final OnRowTap<T>? onElementModify;
   final int? pageSize;
-
+  final OnRowTap<T>? onRowTap;
   final Map<String, RowCellBuilder<T>> rows;
 
-  const SmartTable(
-      {Key? key,
-      required this.dataSource,
-      required this.options,
-      this.onControllerCreated,
-      this.onTableError,
-      this.pageSize,
-      required this.rows,
-      this.onAddNewElement,
-      this.onRemoveElement,
-      this.onElementModify})
-      : super(key: key);
+  const SmartTable({Key? key, required this.dataSource, required this.options, this.onControllerCreated, this.onTableError, this.pageSize, required this.rows, this.onRowTap}) : super(key: key);
 
   @override
   State<SmartTable<T>> createState() => _SmartTableState<T>();
@@ -59,9 +41,6 @@ class SmartTable<T> extends StatefulWidget {
 
 class _SmartTableState<T> extends State<SmartTable<T>> {
   late SmartTableController<T> _tableController;
-
-  late BorderSide outerBorderSide;
-  late BorderSide innerBorderSide;
 
   @override
   void initState() {
@@ -74,24 +53,17 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    outerBorderSide = widget.options.smartTableDecoration?.outerBorder ?? BorderSide(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black);
-    innerBorderSide = widget.options.smartTableDecoration?.innerBorder ?? BorderSide(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black);
   }
 
-  Widget _buildCell(T? value, SmartTableColumn column, Border cellBorder, double defaultColumnWidth, {RowCellBuilder<T>? rowCellBuilder, bool isSearchRow = false}) {
+  Widget _buildCell(T? value, SmartTableColumn column, {RowCellBuilder<T>? rowCellBuilder, bool isSearchRow = false}) {
     Widget _getHeaderWidget() {
-      return AutoSizeText(column.title,
-          maxLines: 1,
-          overflowReplacement: Tooltip(
-            message: column.title,
-            child: Text(column.title, overflow: TextOverflow.ellipsis, maxLines: 1),
-          ));
+      return Text(column.title, overflow: TextOverflow.ellipsis, maxLines: 1);
     }
 
     Icon _getSortIcon() {
       final sortedColumn = _tableController.sortedColumn.value;
-      final inactiveColor = widget.options.smartTableDecoration?.sortIconDecoration?.inactiveColor ?? Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black;
-      final activeColor = widget.options.smartTableDecoration?.sortIconDecoration?.activeColor ?? Theme.of(context).primaryColor;
+      final inactiveColor = widget.options.decoration?.sortIconDecoration?.inactiveColor ?? Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black;
+      final activeColor = widget.options.decoration?.sortIconDecoration?.activeColor ?? Theme.of(context).primaryColor;
 
       if (sortedColumn?.name != column.name) return Icon(FontAwesomeIcons.arrowDownShortWide, size: 15, color: inactiveColor);
       switch (sortedColumn!.columnSortType) {
@@ -105,60 +77,18 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
     }
 
     return Container(
-        width: column.columnWidth ?? defaultColumnWidth,
-        height: isSearchRow ? 60 : 40,
         padding: _DEFAULT_PADDING,
-        decoration: BoxDecoration(border: cellBorder),
-        child: Align(
-          alignment: column.alignment,
-          child: rowCellBuilder != null
-              ? rowCellBuilder(value!)
-              : isSearchRow
-                  ? _generateSearchWidgetForColumn(column)
-                  : Row(
-                      children: [
-                        Expanded(child: _getHeaderWidget()),
-                        if (column.filterOptions.sortEnabled) Material(child: InkWell(onTap: () => _tableController.applySort(column), child: _getSortIcon())),
-                      ],
-                    ),
-        ));
-  }
-
-  Border _getHeaderCellBorder(int index) {
-    final columnsLength = widget.options.columns.length;
-    // final rowsLength = _tableController.tableData.value?.filterResponse.content.length ?? 0;
-
-    final borderAll = Border(top: outerBorderSide, bottom: innerBorderSide, right: innerBorderSide, left: outerBorderSide);
-    final borderAllButRightOuter = Border(top: outerBorderSide, bottom: innerBorderSide, right: outerBorderSide, left: outerBorderSide);
-    final borderWithoutLeftSide = Border(top: outerBorderSide, bottom: innerBorderSide, right: innerBorderSide);
-
-    if (columnsLength == 1) return borderAll;
-    if (columnsLength == 2) {
-      return index == 0 ? borderAll : borderAllButRightOuter;
-    } else {
-      if (index == 0) return borderAll;
-      if (index + 1 == columnsLength) return borderAllButRightOuter;
-      return borderWithoutLeftSide;
-    }
-  }
-
-  Border _getRowCellBorder(int index, bool isContent, int contentLength) {
-    final columnsLength = widget.options.columns.length;
-
-    final borderWithoutTop = Border(bottom: innerBorderSide, right: innerBorderSide, left: outerBorderSide);
-    final borderWithoutLeftSideAndTop = Border(bottom: innerBorderSide, right: isContent ? innerBorderSide : outerBorderSide);
-    final borderWithoutLeftAndRightSideAndTop = Border(bottom: innerBorderSide);
-
-    if (isContent) {
-      return index + 1 == columnsLength ? borderWithoutLeftAndRightSideAndTop : borderWithoutLeftSideAndTop;
-    }
-
-    if (columnsLength == 1) return borderWithoutTop;
-    if (columnsLength == 2) {
-      return index == 0 ? borderWithoutTop : borderWithoutLeftSideAndTop;
-    } else {
-      return index != 0 && index + 1 != columnsLength ? borderWithoutLeftSideAndTop : borderWithoutTop;
-    }
+        child: rowCellBuilder != null
+            ? rowCellBuilder(value!)
+            : isSearchRow
+                ? _generateSearchWidgetForColumn(column)
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _getHeaderWidget(),
+                      if (column.filterOptions.sortEnabled) Material(child: InkWell(onTap: () => _tableController.applySort(column), child: _getSortIcon())),
+                    ],
+                  ));
   }
 
   void _handleFilterChange(SmartTableColumn column, dynamic filterValue) {
@@ -169,14 +99,14 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
   Widget _generateSearchWidgetForColumn(SmartTableColumn column) {
     if (!column.filterOptions.filterEnabled) return Container(height: 50);
     final inputDecoration = InputDecoration(
-        fillColor: widget.options.smartTableDecoration?.filterDecoration?.filterTextFieldDecoration?.fillColor ?? Theme.of(context).canvasColor,
+        fillColor: widget.options.decoration?.filterDecoration?.filterTextFieldDecoration?.fillColor ?? Theme.of(context).canvasColor,
         filled: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 0.0),
         hintText: column.filterOptions.filterHintText ?? column.title,
         hintStyle: Theme.of(context).textTheme.bodySmall!.copyWith(color: Colors.grey),
-        enabledBorder: widget.options.smartTableDecoration?.filterDecoration?.filterTextFieldDecoration?.enabledBorder ??
+        enabledBorder: widget.options.decoration?.filterDecoration?.filterTextFieldDecoration?.enabledBorder ??
             OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: const BorderSide(color: Colors.black)),
-        focusedBorder: widget.options.smartTableDecoration?.filterDecoration?.filterTextFieldDecoration?.focusedBorder ??
+        focusedBorder: widget.options.decoration?.filterDecoration?.filterTextFieldDecoration?.focusedBorder ??
             OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: BorderSide(color: Theme.of(context).primaryColor)));
 
     switch (column.columnType) {
@@ -200,133 +130,85 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
   final ScrollController _horizontalScrollController = ScrollController();
   final ScrollController _verticalScrollController = ScrollController();
 
-  final double _footerHeight = 50;
-
   @override
   Widget build(BuildContext context) {
-    final decoration = widget.options.smartTableDecoration;
-    const double _headerHeight = 50;
-
-    return LayoutBuilder(builder: (context, constraints) {
-      final defaultColumnWidth = constraints.maxWidth / widget.options.columns.length;
-
-      return Container(
-        color: decoration?.color,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (widget.onAddNewElement != null || decoration?.headerOptions?.showDisabledAddNewButton == true /*|| decoration?.headerOptions?.customHeaderBuilder != null*/)
-              SizedBox(
-                  height: _headerHeight, child: SmartTableHeader<T>(
-                tableController: _tableController,
-                smartTableDecoration: decoration,
-                onAddNewElement: widget.onAddNewElement,
-             //   customHeaderBuilder: decoration?.headerOptions?.customHeaderBuilder,
-              )),
-            Expanded(
-              child: Scrollbar(
+    final decoration = widget.options.decoration;
+    return Container(
+      color: decoration?.color,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+              child: SmartTableHeader<T>(
+            tableController: _tableController,
+            options: widget.options,
+          )),
+          Expanded(
+            child: LayoutBuilder(builder: (context, constraints) {
+              return Scrollbar(
                 controller: _horizontalScrollController,
-                child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    controller: _horizontalScrollController,
-                    child: Column(
-                      children: [
-                        Obx(
-                          () => Row(
-                            children: widget.options.columns.indexedMap((c, i) {
-                              final columnWidthWithWeight = defaultColumnWidth * (c.weight ?? 1);
-                              return _buildCell(null, c, _getHeaderCellBorder(i), columnWidthWithWeight);
-                            }).toList(),
-                          ),
-                        ),
-                        Row(
-                          children: widget.options.columns.indexedMap((c, i) {
-                            final columnWidthWithWeight = defaultColumnWidth * (c.weight ?? 1);
-                            return _buildCell(null, c, _getHeaderCellBorder(i), columnWidthWithWeight, isSearchRow: true);
-                          }).toList(),
-                        ),
-                        SizedBox(
-                          height: constraints.maxHeight -
-                              ((decoration?.headerOptions?.showDisabledAddNewButton == true || widget.onAddNewElement != null /*|| decoration?.headerOptions?.customHeaderBuilder != null*/ ? _headerHeight : 0) + _footerHeight + 100),
-                          // width: constraints.maxWidth,
-                          child: Container(
-                            decoration: BoxDecoration(
-                                boxShadow: decoration?.boxShadow, gradient: decoration?.gradient, image: decoration?.image, border: Border(left: outerBorderSide, right: outerBorderSide)),
-                            child: SingleChildScrollView(
-                                controller: _verticalScrollController,
-                                scrollDirection: Axis.vertical,
-                                child: Obx(
-                                  () => _tableController.tableData.value == null
-                                      ? Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)))
-                                      : _tableController.tableData.value?.filterResponse.totalCount == 0
-                                          ? Center(child: Text("Nincs találat!", style: Theme.of(context).textTheme.titleLarge))
-                                          : Column(
+                child: ListView(scrollDirection: Axis.vertical, controller: _horizontalScrollController, children: [
+                  SingleChildScrollView(
+                      controller: _verticalScrollController,
+                      scrollDirection: Axis.horizontal,
+                      child: Column(
+                        children: [
+                          Obx(() => _tableController.tableData.value == null
+                              ? Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)))
+                              : ConstrainedBox(
+                                      constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                                      child: Table(
+                                          border: TableBorder.all(color: widget.options.decoration?.borderColor ?? Theme.of(context).dividerColor),
+                                          columnWidths: widget.options.columns.indexedMap((c,i) => c.columnWidth ?? (i == 0 ? const IntrinsicColumnWidth() : const IntrinsicColumnWidth(flex: 1))).toList().asMap(),
+                                          children: [
+                                            TableRow(
+                                                children: widget.options.columns.indexedMap((c, i) {
+                                              return _buildCell(null, c);
+                                            }).toList()),
+                                            TableRow(
+                                                children: widget.options.columns.indexedMap((c, i) {
+                                                  return _buildCell(null, c, isSearchRow: true);
+                                                }).toList()),
+                                            if(_tableController.tableData.value?.filterResponse.totalCount == 0) TableRow(
                                               children: [
-                                                ..._tableController.tableData.value!.filterResponse.content.indexedMap((e, rowIndex) => FocusedMenuHolder(
-                                                      openWithTap: true,
-                                                      blurSize: 1,
-                                                      menuWidth: constraints.maxWidth,
-                                                      menuOffset: 8,
-                                                      menuBoxDecoration: BoxDecoration(color: const Color.fromARGB(255, 242, 242, 242), borderRadius: BorderRadius.circular(8.0)),
-                                                      onPressed: () {},
-                                                      backgroundColor: rowIndex % 2 != 0 ? (decoration?.secondaryRowColor ?? Theme.of(context).scaffoldBackgroundColor) : Theme.of(context).canvasColor,
-                                                      menuItems: [
-                                                        if (widget.options.customMenuItemsBuilder != null) ...widget.options.customMenuItemsBuilder!(e),
-                                                        if (widget.onElementModify != null)
-                                                          FocusedMenuItem(
-                                                              onPressed: () async {
-                                                                await widget.onElementModify!(e);
-                                                                _tableController.refreshTable();
-                                                              },
-                                                              title: Row(
-                                                                children: [
-                                                                  Icon(Icons.edit, color: Theme.of(context).primaryColor),
-                                                                  const SizedBox(width: 16.0),
-                                                                  const Text("Módosítás"),
-                                                                ],
-                                                              )),
-                                                        if (widget.onRemoveElement != null)
-                                                          FocusedMenuItem(
-                                                              onPressed: () async {
-                                                                final result = await showAnimatedDialog(
-                                                                    context: context,
-                                                                    builder: (context) =>
-                                                                        RemoveDialog(removeElement: widget.options.itemToString == null ? e.toString() : widget.options.itemToString!(e)),
-                                                                    animationType: DialogTransitionType.scale);
-                                                                if (result == true) widget.onRemoveElement!(e);
-                                                              },
-                                                              title: Row(
-                                                                children: const [
-                                                                  Icon(Icons.delete_forever, color: Colors.redAccent),
-                                                                  SizedBox(width: 16.0),
-                                                                  Text("Törlés", style: TextStyle(color: Colors.redAccent)),
-                                                                ],
-                                                              )),
-                                                      ],
-                                                      child: Row(
+                                                Padding(
+                                                  padding: const EdgeInsets.all(8.0),
+                                                  child: Text("Nincs találat!", style: Theme.of(context).textTheme.titleLarge),
+                                                ),
+                                                ...widget.options.columns.take(widget.options.columns.length - 1).map((e) => Container()).toList(),
+
+                                              ]
+                                            ),
+                                            ..._tableController.tableData.value!.filterResponse.content
+                                                .indexedMap((e, rowIndex) => TableRow(
+                                                        decoration: BoxDecoration(
+                                                            color: rowIndex % 2 != 0 ? (decoration?.secondaryRowColor ?? Theme.of(context).scaffoldBackgroundColor) : Theme.of(context).canvasColor),
                                                         children: [
                                                           ...widget.options.columns.indexedMap((c, i) {
-                                                            final columnWidthWithWeight = defaultColumnWidth * (c.weight ?? 1);
-                                                            return _buildCell(e, c, _getRowCellBorder(i, true, _tableController.tableData.value!.filterResponse.content.length), columnWidthWithWeight,
-                                                                rowCellBuilder: widget.rows[c.name]);
+                                                            return TableRowInkWell(
+                                                                onTap: () {
+                                                                  showAnimatedDialog(
+                                                                      barrierDismissible: true,
+                                                                      context: context,
+                                                                      builder: (context) => SmartTableDialog<T>(smartTableOptions: widget.options, value: e),
+                                                                      animationType: DialogTransitionType.scale);
+                                                                },
+                                                                child: _buildCell(e, c, rowCellBuilder: widget.rows[c.name]));
                                                           }),
-                                                        ],
-                                                      ),
-                                                    )),
-                                              ],
-                                            ),
-                                )),
-                          ),
-                        ),
-                      ],
-                    )),
-              ),
-            ),
-            SizedBox(height: _footerHeight, child: SmartTableFooter(tableController: _tableController, smartTableDecoration: decoration))
-          ],
-        ),
-      );
-    });
+                                                        ]))
+                                                .toList(),
+                                          ]),
+                                    )),
+                        ],
+                      )),
+                ]),
+              );
+            }),
+          ),
+          SmartTableFooter(tableController: _tableController, smartTableDecoration: decoration)
+        ],
+      ),
+    );
   }
 }
 
@@ -359,11 +241,9 @@ class SmartTableFooter extends StatelessWidget {
     return Obx(() {
       final currentPage = tableController.currentTablePage.value.page;
       final totalPages = tableController.totalPages ?? 0;
-      final outerBorderSide = smartTableDecoration?.outerBorder ?? BorderSide(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black);
 
       return Container(
         padding: const EdgeInsets.all(8.0),
-        decoration: BoxDecoration(border: Border(top: smartTableDecoration?.innerBorder ?? outerBorderSide, left: outerBorderSide, right: outerBorderSide, bottom: outerBorderSide)),
         child: Row(
           children: [
             TextButton(
@@ -399,11 +279,12 @@ class SmartTableFooter extends StatelessWidget {
 
 class SmartTableHeader<T> extends StatelessWidget {
   final SmartTableController tableController;
-  final SmartTableDecoration? smartTableDecoration;
   final OnAddNewElement<T>? onAddNewElement;
-  //final CustomHeaderBuilder? customHeaderBuilder;
+  final SmartTableOptions<T> options;
 
-  const SmartTableHeader({Key? key, required this.tableController, this.smartTableDecoration, this.onAddNewElement/*, this.customHeaderBuilder*/}) : super(key: key);
+  const SmartTableHeader({Key? key, required this.tableController, this.onAddNewElement, required this.options /*, this.customHeaderBuilder*/
+      })
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -411,21 +292,20 @@ class SmartTableHeader<T> extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Column(
         children: [
-          if (onAddNewElement != null)
+          if (onAddNewElement != null || options.headerOptions?.showDisabledAddNewButton == true)
             Row(
               children: [
                 TextButton.icon(
-                    icon: Icon(Icons.add, color: smartTableDecoration?.headerOptions?.addNewButtonIconColor),
+                    icon: Icon(Icons.add, color: options.headerOptions?.addNewButtonIconColor),
                     onPressed: onAddNewElement == null
                         ? null
                         : () async {
                             final newElement = await onAddNewElement!();
                             await tableController.refreshTable();
                           },
-                    label: Text(smartTableDecoration?.headerOptions?.addNewButtonLabel ?? "Új elem hozzáadása"))
+                    label: Text(options.headerOptions?.addNewButtonLabel ?? "Új elem hozzáadása"))
               ],
             ),
-         // if (customHeaderBuilder != null) customHeaderBuilder!()
         ],
       ),
     );

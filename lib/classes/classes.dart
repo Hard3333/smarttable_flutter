@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:smart_table_flutter/classes/filter_response.dart';
-import 'package:smart_table_flutter/extensions/focused_menu/modals.dart';
+import 'package:smart_table_flutter/common/smart_table_dialog.dart';
 import 'package:smart_table_flutter/smart_table.dart';
 
 typedef GetData<T> = Future<FilterResponse<T>> Function(TableFilterData tableFilterData);
@@ -17,18 +17,6 @@ abstract class DataSource<T> {
   const DataSource();
 }
 
-Widget _defaultColumnHeaderBuilder() => const Text("Nameless Column");
-
-/*
-Widget _defaultColumnHeaderBuilder<T>(T? value, ColumnType columnType) {
-  switch(columnType){
-    case ColumnType.STRING:
-    case ColumnType.NUMERIC: return Text(value.toString());
-    case ColumnType.BOOLEAN: return Icon((value as bool) ? Icons.check : Icons.close, color: value ? Colors.green : Colors.redAccent);
-    case ColumnType.DATE: return Text(DateFormat(_DEFAULT_DATE_FORMAT).format(value as DateTime));
-  }
-}*/
-
 class AsyncDataSource<T> extends DataSource<T>{
   final GetData<T> fetchData;
 
@@ -40,11 +28,15 @@ class AsyncDataSource<T> extends DataSource<T>{
 
 class SmartTableOptions<T>{
   final List<SmartTableColumn> columns;
-  final SmartTableDecoration? smartTableDecoration;
+  final SmartTableDecoration? decoration;
   final String Function(T item)? itemToString;
-  final List<FocusedMenuItem> Function(T item)? customMenuItemsBuilder;
+  final List<SmartTableDialogItem> Function(T item)? customMenuItemsBuilder;
+  final OnAddNewElement<T>? onAddNewElement;
+  final OnRemoveElement<T>? onRemoveElement;
+  final OnRowTap<T>? onElementModify;
+  final HeaderOptions? headerOptions;
 
-  const SmartTableOptions({required this.columns, this.smartTableDecoration, this.itemToString, this.customMenuItemsBuilder});
+  const SmartTableOptions({required this.columns, this.decoration, this.itemToString, this.customMenuItemsBuilder,this.onAddNewElement, this.onRemoveElement, this.onElementModify, this.headerOptions});
 }
 
 class SmartTableDecoration{
@@ -54,14 +46,12 @@ class SmartTableDecoration{
   final BorderRadiusGeometry? borderRadius;
   final List<BoxShadow>? boxShadow;
   final Gradient? gradient;
-  final BorderSide? outerBorder;
-  final BorderSide? innerBorder;
+  final Color? borderColor;
   final SortIconDecoration? sortIconDecoration;
   final FilterDecoration? filterDecoration;
-  final HeaderOptions? headerOptions;
   final Color? secondaryRowColor;
 
-  const SmartTableDecoration({this.color, this.image, this.borderRadius, this.boxShadow, this.gradient, this.outerBorder, this.innerBorder, this.sortIconDecoration, this.filterDecoration, this.headerOptions, this.secondaryRowColor});
+  const SmartTableDecoration({this.color, this.image, this.borderRadius, this.boxShadow, this.gradient, this.borderColor, this.sortIconDecoration, this.filterDecoration, this.secondaryRowColor});
 
 }
 
@@ -94,8 +84,7 @@ class SmartTableColumn<T>{
   final ColumnType columnType;
   final ColumnSortType columnSortType;
   final Alignment alignment;
-  final double? columnWidth;
-  final int? weight;
+  final TableColumnWidth? columnWidth;
 
   SmartTableColumn({
     required this.name,
@@ -105,7 +94,6 @@ class SmartTableColumn<T>{
     this.columnSortType = ColumnSortType.NONE,
     this.columnWidth,
     this.alignment = Alignment.centerLeft,
-    this.weight
   });
 
   SmartTableColumn copyWith({ColumnSortType? columnSortType}) => SmartTableColumn(

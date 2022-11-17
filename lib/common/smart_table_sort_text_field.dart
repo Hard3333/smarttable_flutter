@@ -40,36 +40,33 @@ class _SmartTableSortTextFieldState extends State<SmartTableSortTextField> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 40,
-      child: TextField(
-        obscureText: widget.obscureText,
-        enabled: widget.enabled,
-        cursorColor: Theme.of(context).primaryColor,
-        controller: controller,
-        maxLines: widget.maxLines,
-        keyboardType: widget.textInputType,
-        inputFormatters: [
-          if(widget.textInputType == TextInputType.number) FilteringTextInputFormatter.digitsOnly
-        ],
-        style: Theme.of(context).textTheme.bodyText1,
-        onChanged: (value) {
-          if (_debounce?.isActive ?? false) _debounce?.cancel();
-          _debounce = Timer(const Duration(milliseconds: 500), () {
-            if(widget.onChanged != null) widget.onChanged!(value);
-          });
-        },
-        decoration: widget.decoration ?? InputDecoration(
-            fillColor: widget.bgColor ?? (widget.inverseBgColor ? Theme.of(context).scaffoldBackgroundColor : Theme.of(context).canvasColor),
-            filled: true,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 0.0),
-            hintText: widget.hintText,
-            suffixIcon: widget.suffixIcon,
-            hintStyle: Theme.of(context).textTheme.bodySmall!.copyWith(color: Colors.grey),
-            disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: BorderSide(color: Theme.of(context).canvasColor)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: BorderSide(color: controller.text != "" ? Theme.of(context).primaryColor : (widget.borderColor ?? Theme.of(context).canvasColor))),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: BorderSide(color: Theme.of(context).primaryColor))),
-      ),
+    return TextField(
+      obscureText: widget.obscureText,
+      enabled: widget.enabled,
+      cursorColor: Theme.of(context).primaryColor,
+      controller: controller,
+      maxLines: widget.maxLines,
+      keyboardType: widget.textInputType,
+      inputFormatters: [
+        if(widget.textInputType == TextInputType.number) FilteringTextInputFormatter.digitsOnly
+      ],
+      style: Theme.of(context).textTheme.bodyText1,
+      onChanged: (value) {
+        if (_debounce?.isActive ?? false) _debounce?.cancel();
+        _debounce = Timer(const Duration(milliseconds: 500), () {
+          if(widget.onChanged != null) widget.onChanged!(value);
+        });
+      },
+      decoration: widget.decoration ?? InputDecoration(
+          fillColor: widget.bgColor ?? (widget.inverseBgColor ? Theme.of(context).scaffoldBackgroundColor : Theme.of(context).canvasColor),
+          filled: true,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 0.0),
+          hintText: widget.hintText,
+          suffixIcon: widget.suffixIcon,
+          hintStyle: Theme.of(context).textTheme.bodySmall!.copyWith(color: Colors.grey),
+          disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: BorderSide(color: Theme.of(context).canvasColor)),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: BorderSide(color: controller.text != "" ? Theme.of(context).primaryColor : (widget.borderColor ?? Theme.of(context).canvasColor))),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: BorderSide(color: Theme.of(context).primaryColor))),
     );
   }
 
