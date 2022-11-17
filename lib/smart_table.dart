@@ -5,6 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:smart_table_flutter/classes/classes.dart';
 import 'package:smart_table_flutter/common/remove_dialog.dart';
+import 'package:smart_table_flutter/common/smart_table_date_picker.dart';
 import 'package:smart_table_flutter/common/smart_table_date_range_picker.dart';
 import 'package:smart_table_flutter/common/smart_table_dropdown_field.dart';
 import 'package:smart_table_flutter/common/smart_table_sort_checkbox.dart';
@@ -19,7 +20,7 @@ import 'package:smart_table_flutter/extensions/focused_menu/modals.dart';
 
 typedef OnControllerCreated<T> = Function(SmartTableController<T> smartTableController);
 typedef OnAddNewElement<T> = FutureOr<T?> Function();
-typedef CustomHeaderBuilder= Widget Function();
+typedef CustomHeaderBuilder = Widget Function();
 typedef OnRemoveElement<T> = Function(T element);
 typedef OnRowTap<T> = Function(T element);
 
@@ -148,7 +149,6 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
     final borderWithoutLeftSideAndTop = Border(bottom: innerBorderSide, right: isContent ? innerBorderSide : outerBorderSide);
     final borderWithoutLeftAndRightSideAndTop = Border(bottom: innerBorderSide);
 
-
     if (isContent) {
       return index + 1 == columnsLength ? borderWithoutLeftAndRightSideAndTop : borderWithoutLeftSideAndTop;
     }
@@ -186,6 +186,8 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
         return SmartTableSortTextField(
             textInputType: TextInputType.number, onChanged: (newValue) => _handleFilterChange(column, newValue), decoration: inputDecoration, enabled: column.filterOptions.filterEnabled);
       case ColumnType.DATE:
+        return SmartTableDatePicker(onValueChanged: (DateTime value) => _handleFilterChange(column, value));
+      case ColumnType.DATE_RANGE:
         return SmartTableDateRangePicker(onValueChanged: (MapEntry<DateTime, DateTime> value) => _handleFilterChange(column, value));
       case ColumnType.BOOLEAN:
         return SmartTableSortCheckbox(onChanged: (bool value) => _handleFilterChange(column, value));
@@ -203,7 +205,7 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
   @override
   Widget build(BuildContext context) {
     final decoration = widget.options.smartTableDecoration;
-    final double _headerHeight = widget.options.smartTableDecoration?.headerOptions?.customHeaderBuilder != null ? 100  : 50;
+    const double _headerHeight = 50;
 
     return LayoutBuilder(builder: (context, constraints) {
       final defaultColumnWidth = constraints.maxWidth / widget.options.columns.length;
@@ -213,12 +215,13 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (widget.onAddNewElement != null || decoration?.headerOptions?.showDisabledAddNewButton == true || decoration?.headerOptions?.customHeaderBuilder != null)
-              SizedBox(/*height: _headerHeight,*/ child: SmartTableHeader<T>(
-                  tableController: _tableController,
-                  smartTableDecoration: decoration,
-                  onAddNewElement: widget.onAddNewElement,
-                  customHeaderBuilder: decoration?.headerOptions?.customHeaderBuilder,
+            if (widget.onAddNewElement != null || decoration?.headerOptions?.showDisabledAddNewButton == true /*|| decoration?.headerOptions?.customHeaderBuilder != null*/)
+              SizedBox(
+                  height: _headerHeight, child: SmartTableHeader<T>(
+                tableController: _tableController,
+                smartTableDecoration: decoration,
+                onAddNewElement: widget.onAddNewElement,
+             //   customHeaderBuilder: decoration?.headerOptions?.customHeaderBuilder,
               )),
             Expanded(
               child: Scrollbar(
@@ -243,14 +246,12 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
                           }).toList(),
                         ),
                         SizedBox(
-                          height: constraints.maxHeight - (/*(decoration?.headerOptions?.showDisabledAddNewButton == true || widget.onAddNewElement != null || decoration?.headerOptions?.customHeaderBuilder != null ? _headerHeight : 0) + */_footerHeight + 300),
+                          height: constraints.maxHeight -
+                              ((decoration?.headerOptions?.showDisabledAddNewButton == true || widget.onAddNewElement != null /*|| decoration?.headerOptions?.customHeaderBuilder != null*/ ? _headerHeight : 0) + _footerHeight + 100),
                           // width: constraints.maxWidth,
                           child: Container(
                             decoration: BoxDecoration(
-                                boxShadow: decoration?.boxShadow,
-                                gradient: decoration?.gradient,
-                                image: decoration?.image,
-                                border: Border(left: outerBorderSide, right: outerBorderSide)),
+                                boxShadow: decoration?.boxShadow, gradient: decoration?.gradient, image: decoration?.image, border: Border(left: outerBorderSide, right: outerBorderSide)),
                             child: SingleChildScrollView(
                                 controller: _verticalScrollController,
                                 scrollDirection: Axis.vertical,
@@ -306,7 +307,8 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
                                                         children: [
                                                           ...widget.options.columns.indexedMap((c, i) {
                                                             final columnWidthWithWeight = defaultColumnWidth * (c.weight ?? 1);
-                                                            return _buildCell(e, c, _getRowCellBorder(i, true, _tableController.tableData.value!.filterResponse.content.length), columnWidthWithWeight, rowCellBuilder: widget.rows[c.name]);
+                                                            return _buildCell(e, c, _getRowCellBorder(i, true, _tableController.tableData.value!.filterResponse.content.length), columnWidthWithWeight,
+                                                                rowCellBuilder: widget.rows[c.name]);
                                                           }),
                                                         ],
                                                       ),
@@ -399,9 +401,9 @@ class SmartTableHeader<T> extends StatelessWidget {
   final SmartTableController tableController;
   final SmartTableDecoration? smartTableDecoration;
   final OnAddNewElement<T>? onAddNewElement;
-  final CustomHeaderBuilder? customHeaderBuilder;
+  //final CustomHeaderBuilder? customHeaderBuilder;
 
-  const SmartTableHeader({Key? key, required this.tableController, this.smartTableDecoration, this.onAddNewElement, this.customHeaderBuilder}) : super(key: key);
+  const SmartTableHeader({Key? key, required this.tableController, this.smartTableDecoration, this.onAddNewElement/*, this.customHeaderBuilder*/}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -409,20 +411,21 @@ class SmartTableHeader<T> extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Column(
         children: [
-          if(onAddNewElement != null) Row(
-            children: [
-              TextButton.icon(
-                  icon: Icon(Icons.add, color: smartTableDecoration?.headerOptions?.addNewButtonIconColor),
-                  onPressed: onAddNewElement == null
-                      ? null
-                      : () async {
-                          final newElement = await onAddNewElement!();
-                          await tableController.refreshTable();
-                        },
-                  label: Text(smartTableDecoration?.headerOptions?.addNewButtonLabel ?? "Új elem hozzáadása"))
-            ],
-          ),
-          if(customHeaderBuilder != null) customHeaderBuilder!()
+          if (onAddNewElement != null)
+            Row(
+              children: [
+                TextButton.icon(
+                    icon: Icon(Icons.add, color: smartTableDecoration?.headerOptions?.addNewButtonIconColor),
+                    onPressed: onAddNewElement == null
+                        ? null
+                        : () async {
+                            final newElement = await onAddNewElement!();
+                            await tableController.refreshTable();
+                          },
+                    label: Text(smartTableDecoration?.headerOptions?.addNewButtonLabel ?? "Új elem hozzáadása"))
+              ],
+            ),
+         // if (customHeaderBuilder != null) customHeaderBuilder!()
         ],
       ),
     );

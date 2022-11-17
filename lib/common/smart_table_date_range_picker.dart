@@ -54,6 +54,6 @@ class _SmartTableDateRangePickerState extends State<SmartTableDateRangePicker> {
         },
         child: SmartTableSortTextField(controller: textController,
             maxLines: 1,
-            enabled: false, hintText: "Adjon meg egy dátumot", suffixIcon: Icon(Icons.calendar_today, color: Theme.of(context).dividerColor)));
+            enabled: false, hintText: "Válasszon egy időszakot", suffixIcon: Icon(Icons.calendar_today,size: 16.0, color: Theme.of(context).dividerColor)));
   }
 }

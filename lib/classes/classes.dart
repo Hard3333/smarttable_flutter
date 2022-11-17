@@ -69,9 +69,9 @@ class HeaderOptions{
   final bool showDisabledAddNewButton;
   final String? addNewButtonLabel;
   final Color? addNewButtonIconColor;
-  final CustomHeaderBuilder? customHeaderBuilder;
+  //final CustomHeaderBuilder? customHeaderBuilder;
 
-  HeaderOptions({this.addNewButtonLabel, this.addNewButtonIconColor, this.showDisabledAddNewButton = true, this.customHeaderBuilder,});
+  HeaderOptions({this.addNewButtonLabel, this.addNewButtonIconColor, this.showDisabledAddNewButton = true, /*this.customHeaderBuilder*/});
 }
 
 class FilterDecoration{
@@ -129,7 +129,7 @@ class SmartTableColumnFilterOptions<T>{
   const SmartTableColumnFilterOptions({this.onFind, this.filterEnabled = false, this.sortEnabled = false, this.filterHintText, this.itemToString, this.loadFirstItemAutomaticallyInDropdown = false});
 }
 
-enum ColumnType {STRING, NUMERIC, DATE, BOOLEAN, DROPDOWN}
+enum ColumnType {STRING, NUMERIC, DATE_RANGE, DATE, BOOLEAN, DROPDOWN}
 enum ColumnSortType {NONE, ASC, DESC}
 
 class SmartTableRow<T>{
