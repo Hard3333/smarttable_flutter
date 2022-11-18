@@ -188,11 +188,16 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
                                           ...widget.options.columns.indexedMap((c, i) {
                                             return TableRowInkWell(
                                                 onTap: () {
-                                                  showAnimatedDialog(
+                                                  final customItems = widget.options.customMenuItemsBuilder != null ? widget.options.customMenuItemsBuilder!(e) : <SmartTableDialogItem>[];
+                                                  if(customItems.length == 1 && widget.options.onElementModify == null && widget.options.onRemoveElement == null) {
+                                                    customItems.first.onPressed();
+                                                  } else {
+                                                    showAnimatedDialog(
                                                       barrierDismissible: true,
                                                       context: context,
                                                       builder: (context) => SmartTableDialog<T>(smartTableOptions: widget.options,controller: _tableController, value: e),
                                                       animationType: DialogTransitionType.scale);
+                                                  }
                                                 },
                                                 child: _buildCell(e, c, rowCellBuilder: widget.rows[c.name]));
                                           }),
