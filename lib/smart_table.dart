@@ -173,15 +173,12 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
                                         children: widget.options.columns.indexedMap((c, i) {
                                           return _buildCell(null, c, isSearchRow: true);
                                         }).toList()),
-                                    if(_tableController.tableData.value?.filterResponse.totalCount == 0) TableRow(
+                       /*             if(_tableController.tableData.value?.filterResponse.totalCount == 0) TableRow(
                                         children: [
-                                          Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Text("Nincs találat!", style: Theme.of(context).textTheme.titleLarge),
-                                          ),
+
                                           ...widget.options.columns.take(widget.options.columns.length - 1).map((e) => Container()).toList(),
                                         ]
-                                    ),
+                                    ),*/
                                     ..._tableController.tableData.value?.filterResponse.content
                                         .indexedMap((e, rowIndex) => TableRow(
                                         decoration: BoxDecoration(
@@ -207,6 +204,9 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
                           ),
                     ]),
                   ),
+                  Obx(() => _tableController.tableData.value?.filterResponse.totalCount == 0 ? Positioned.fill(
+                    child: Center(child: Text("Nincs találat!", style: Theme.of(context).textTheme.titleLarge)),
+                  ) : Container()),
                   Obx(() => _tableController.tableData.value == null ? Positioned.fill(
                     child: AbsorbPointer(
                       child: Container(
