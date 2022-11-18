@@ -14,9 +14,12 @@ class _SmartTableSortCheckboxState extends State<SmartTableSortCheckbox> {
 
   @override
   Widget build(BuildContext context) {
-    return Checkbox(value: selectedValue, onChanged: (newValue) {
-      setState(() => selectedValue = newValue!);
-      widget.onChanged(selectedValue);
-    });
+    return SizedBox(
+      height: 20,
+      child: Checkbox(value: selectedValue, onChanged: (newValue) {
+        setState(() => selectedValue = newValue!);
+        widget.onChanged(selectedValue);
+      }),
+    );
   }
 }

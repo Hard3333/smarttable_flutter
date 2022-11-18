@@ -64,7 +64,7 @@ class _SmartTableSortTextFieldState extends State<SmartTableSortTextField> {
           hintText: widget.hintText,
           suffixIcon: widget.suffixIcon,
           hintStyle: Theme.of(context).textTheme.bodySmall!.copyWith(color: Colors.grey),
-          disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: BorderSide(color: Theme.of(context).canvasColor)),
+          disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: BorderSide(color: Colors.grey[400]!)),
           enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: BorderSide(color: controller.text != "" ? Theme.of(context).primaryColor : (widget.borderColor ?? Theme.of(context).canvasColor))),
           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: BorderSide(color: Theme.of(context).primaryColor))),
     );
