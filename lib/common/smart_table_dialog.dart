@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:smart_table_flutter/classes/classes.dart';
+import 'package:smart_table_flutter/core/smart_table_controller.dart';
 
 class SmartTableDialog<T> extends StatelessWidget {
   final T value;
   final SmartTableOptions<T> smartTableOptions;
-  const SmartTableDialog({Key? key, required this.smartTableOptions, required this.value}) : super(key: key);
+  final SmartTableController<T> controller;
+
+  const SmartTableDialog({Key? key, required this.smartTableOptions, required this.value, required this.controller}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -21,14 +24,20 @@ class SmartTableDialog<T> extends StatelessWidget {
               child: SmartTableDialogItem(
                   iconWidget: const Icon(Icons.delete, color: Colors.redAccent, size: 20),
                   title: "Törlés",
-                  onPressed: () => smartTableOptions.onRemoveElement!(value)),
+                  onPressed: () {
+                    smartTableOptions.onRemoveElement!(value);
+                    controller.refreshTable();
+                  }),
             ),
             if(smartTableOptions.onElementModify != null) Padding(
               padding: const EdgeInsets.only(top: 8.0),
               child: SmartTableDialogItem(
                   icon: Icons.edit,
                   title: "Módosítás",
-                  onPressed: () => smartTableOptions.onElementModify!(value)),
+                  onPressed: () {
+                    smartTableOptions.onElementModify!(value);
+                    controller.refreshTable();
+                  }),
             ),
           ],
         ),

@@ -191,7 +191,7 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
                                                   showAnimatedDialog(
                                                       barrierDismissible: true,
                                                       context: context,
-                                                      builder: (context) => SmartTableDialog<T>(smartTableOptions: widget.options, value: e),
+                                                      builder: (context) => SmartTableDialog<T>(smartTableOptions: widget.options,controller: _tableController, value: e),
                                                       animationType: DialogTransitionType.scale);
                                                 },
                                                 child: _buildCell(e, c, rowCellBuilder: widget.rows[c.name]));
