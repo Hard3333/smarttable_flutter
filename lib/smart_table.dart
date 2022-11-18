@@ -189,6 +189,7 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
                                             return TableRowInkWell(
                                                 onTap: () {
                                                   final customItems = widget.options.customMenuItemsBuilder != null ? widget.options.customMenuItemsBuilder!(e) : <SmartTableDialogItem>[];
+                                                  if(customItems.isEmpty && widget.options.onElementModify == null && widget.options.onRemoveElement == null )  return;
                                                   if(customItems.length == 1 && widget.options.onElementModify == null && widget.options.onRemoveElement == null) {
                                                     customItems.first.onPressed();
                                                   } else {
