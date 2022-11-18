@@ -24,8 +24,8 @@ class SmartTableDialog<T> extends StatelessWidget {
               child: SmartTableDialogItem(
                   iconWidget: const Icon(Icons.delete, color: Colors.redAccent, size: 20),
                   title: "Törlés",
-                  onPressed: () {
-                    smartTableOptions.onRemoveElement!(value);
+                  onPressed: () async{
+                    await smartTableOptions.onRemoveElement!(value);
                     controller.refreshTable();
                   }),
             ),
@@ -34,8 +34,8 @@ class SmartTableDialog<T> extends StatelessWidget {
               child: SmartTableDialogItem(
                   icon: Icons.edit,
                   title: "Módosítás",
-                  onPressed: () {
-                    smartTableOptions.onElementModify!(value);
+                  onPressed: () async{
+                    await smartTableOptions.onElementModify!(value);
                     controller.refreshTable();
                   }),
             ),
