@@ -18,8 +18,8 @@ export 'package:smart_table_flutter/classes/classes.dart';
 typedef OnControllerCreated<T> = Function(SmartTableController<T> smartTableController);
 typedef OnAddNewElement<T> = FutureOr<T?> Function();
 typedef CustomHeaderBuilder = Widget Function();
-typedef OnRemoveElement<T> = Function(T element);
-typedef OnRowTap<T> = Function(T element);
+typedef OnRemoveElement<T> = Future<bool> Function(T element);
+typedef OnElementModify<T> = Future<bool> Function(T element);
 
 // ignore: constant_identifier_names
 const EdgeInsets _DEFAULT_PADDING = EdgeInsets.all(8.0);
@@ -30,10 +30,9 @@ class SmartTable<T> extends StatefulWidget {
   final OnControllerCreated<T>? onControllerCreated;
   final OnTableError? onTableError;
   final int? pageSize;
-  final OnRowTap<T>? onRowTap;
   final Map<String, RowCellBuilder<T>> rows;
 
-  const SmartTable({Key? key, required this.dataSource, required this.options, this.onControllerCreated, this.onTableError, this.pageSize, required this.rows, this.onRowTap}) : super(key: key);
+  const SmartTable({Key? key, required this.dataSource, required this.options, this.onControllerCreated, this.onTableError, this.pageSize, required this.rows}) : super(key: key);
 
   @override
   State<SmartTable<T>> createState() => _SmartTableState<T>();
@@ -187,9 +186,14 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
                                         children: [
                                           ...widget.options.columns.indexedMap((c, i) {
                                             return TableRowInkWell(
-                                                onTap: () {
+                                                onTap: () async{
                                                   final customItems = widget.options.customMenuItemsBuilder != null ? widget.options.customMenuItemsBuilder!(e) : <SmartTableDialogItem>[];
-                                                  if(customItems.isEmpty && widget.options.onElementModify == null && widget.options.onRemoveElement == null )  return;
+                                                  if(customItems.isEmpty && widget.options.onElementModify == null && widget.options.onRemoveElement == null) return;
+                                                  if(customItems.isEmpty && widget.options.onElementModify != null){
+                                                    final result = await widget.options.onElementModify!(e);
+                                                    if(result == true) _tableController.refreshTable();
+                                                    return;
+                                                  }
                                                   if(customItems.length == 1 && widget.options.onElementModify == null && widget.options.onRemoveElement == null) {
                                                     customItems.first.onPressed();
                                                   } else {

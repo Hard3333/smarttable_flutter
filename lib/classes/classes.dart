@@ -33,7 +33,7 @@ class SmartTableOptions<T>{
   final List<SmartTableDialogItem> Function(T item)? customMenuItemsBuilder;
   final OnAddNewElement<T>? onAddNewElement;
   final OnRemoveElement<T>? onRemoveElement;
-  final OnRowTap<T>? onElementModify;
+  final OnElementModify<T>? onElementModify;
   final HeaderOptions? headerOptions;
 
   const SmartTableOptions({required this.columns, this.decoration, this.itemToString, this.customMenuItemsBuilder,this.onAddNewElement, this.onRemoveElement, this.onElementModify, this.headerOptions});
