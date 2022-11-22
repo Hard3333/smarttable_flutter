@@ -19,16 +19,6 @@ class SmartTableDialog<T> extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if(smartTableOptions.customMenuItemsBuilder != null) ...smartTableOptions.customMenuItemsBuilder!(value),
-            if(smartTableOptions.onRemoveElement != null) Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: SmartTableDialogItem(
-                  iconWidget: const Icon(Icons.delete, color: Colors.redAccent, size: 20),
-                  title: "Törlés",
-                  onPressed: () async{
-                    final result = await smartTableOptions.onRemoveElement!(value);
-                    if(result == true) controller.refreshTable();
-                  }),
-            ),
             if(smartTableOptions.onElementModify != null) Padding(
               padding: const EdgeInsets.only(top: 8.0),
               child: SmartTableDialogItem(
@@ -36,6 +26,16 @@ class SmartTableDialog<T> extends StatelessWidget {
                   title: "Módosítás",
                   onPressed: () async{
                     final result = await smartTableOptions.onElementModify!(value);
+                    if(result == true) controller.refreshTable();
+                  }),
+            ),
+            if(smartTableOptions.onRemoveElement != null) Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: SmartTableDialogItem(
+                  iconWidget: const Icon(Icons.delete, color: Colors.redAccent, size: 20),
+                  title: "Törlés",
+                  onPressed: () async{
+                    final result = await smartTableOptions.onRemoveElement!(value);
                     if(result == true) controller.refreshTable();
                   }),
             ),
