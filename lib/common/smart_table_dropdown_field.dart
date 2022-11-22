@@ -48,6 +48,7 @@ class _SmartTableDropdownFieldState<T> extends State<SmartTableDropdownField<T>>
             contentPadding: const EdgeInsets.only(left: 8.0,right: 8.0,top:8.0),
             hintStyle: Theme.of(context).textTheme.bodySmall!.copyWith(color: Colors.grey),
             fillColor: widget.inverseBg ? Theme.of(context).scaffoldBackgroundColor : Theme.of(context).canvasColor,
+            hintText: widget.title,
             suffixIcon: const Icon(Icons.arrow_drop_down),
             focusColor: Theme.of(context).primaryColor,
             alignLabelWithHint: false),
