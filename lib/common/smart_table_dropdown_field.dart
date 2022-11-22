@@ -50,9 +50,7 @@ class _SmartTableDropdownFieldState<T> extends State<SmartTableDropdownField<T>>
             fillColor: widget.inverseBg ? Theme.of(context).scaffoldBackgroundColor : Theme.of(context).canvasColor,
             suffixIcon: const Icon(Icons.arrow_drop_down),
             focusColor: Theme.of(context).primaryColor,
-            alignLabelWithHint: false,
-            labelStyle: Theme.of(context).textTheme.bodySmall!.copyWith(color: Colors.grey, fontSize: 13.0),
-            labelText: widget.title),
+            alignLabelWithHint: false),
         onSaved: (str) {},
         onChanged: (dynamic str) => widget.onChanged != null ? widget.onChanged!(str) : {},
         displayItemFn: (dynamic item) => Text(
