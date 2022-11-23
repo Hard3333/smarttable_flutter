@@ -189,7 +189,7 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
                                                 onTap: () async{
                                                   final customItems = widget.options.customMenuItemsBuilder != null ? widget.options.customMenuItemsBuilder!(e) : <SmartTableDialogItem>[];
                                                   if(customItems.isEmpty && widget.options.onElementModify == null && widget.options.onRemoveElement == null) return;
-                                                  if(customItems.isEmpty && widget.options.onElementModify != null){
+                                                  if(customItems.isEmpty && widget.options.onElementModify != null && widget.options.onRemoveElement == null){
                                                     final result = await widget.options.onElementModify!(e);
                                                     if(result == true) _tableController.refreshTable();
                                                     return;
