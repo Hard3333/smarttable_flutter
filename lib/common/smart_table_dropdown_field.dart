@@ -9,8 +9,9 @@ class SmartTableDropdownField<T> extends StatefulWidget {
   final bool inverseBg;
   final T? value;
   final bool loadFirstItem;
+  final Future<void> Function()? onEmptyCreate;
 
-  const SmartTableDropdownField({Key? key, required this.findFn, required this.title, this.onChanged, required this.itemToString, this.inverseBg = false, this.value, this.loadFirstItem = false}) : super(key: key);
+  const SmartTableDropdownField({Key? key, required this.findFn, required this.title, this.onChanged, required this.itemToString, this.inverseBg = false, this.value, this.loadFirstItem = false, this.onEmptyCreate}) : super(key: key);
 
   @override
   State<SmartTableDropdownField<T>> createState() => _SmartTableDropdownFieldState<T>();
@@ -38,7 +39,7 @@ class _SmartTableDropdownFieldState<T> extends State<SmartTableDropdownField<T>>
     return ClipRRect(
       borderRadius: BorderRadius.circular(8.0),
       child: DropdownFormField<T>(
-        onEmptyActionPressed: () async {},
+        onEmptyActionPressed: widget.onEmptyCreate,
         emptyText: "Nincs találat",
         emptyActionText: "Létrehozás",
         decoration: InputDecoration(
