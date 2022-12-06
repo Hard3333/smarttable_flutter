@@ -52,13 +52,17 @@ class SmartTableController<T> extends GetxController{
   }
 
   Future<void> listenPageChanges(TablePageData tablePage) async {
+    if (currentTablePage.value.page != tablePage.page) {
       if (tablePage.page > (totalPages ?? 0)) throw Exception("Hiba az adatok frissítése közben. Ismeretlen oldal!");
       await _loadDataToTable(page: tablePage.page);
+    }
   }
 
   void setPage(TablePageData tablePageData) {
-    if (tablePageData.page > (totalPages ?? 0)) throw Exception("Ismeretlen oldal, frissítse a táblázatot");
-    currentTablePage.value = tablePageData;
+    if (currentTablePage.value.page != tablePageData.page) {
+      if (tablePageData.page > (totalPages ?? 0)) throw Exception("Ismeretlen oldal, frissítse a táblázatot");
+      currentTablePage.value = tablePageData;
+    }
   }
 
   Future<void> applySort(SmartTableColumn newSortedColumn) async {
