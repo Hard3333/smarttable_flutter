@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smart_table_flutter/classes/classes.dart';
 import 'package:smart_table_flutter/extensions/dropdown_plus/dropdown_plus.dart';
 
 class SmartTableDropdownField<T> extends StatefulWidget {
@@ -10,8 +11,9 @@ class SmartTableDropdownField<T> extends StatefulWidget {
   final T? value;
   final bool loadFirstItem;
   final Future<void> Function()? onEmptyCreate;
+  final SmartTableDropdownDecoration? decoration;
 
-  const SmartTableDropdownField({Key? key, required this.findFn, required this.title, this.onChanged, required this.itemToString, this.inverseBg = false, this.value, this.loadFirstItem = false, this.onEmptyCreate}) : super(key: key);
+  const SmartTableDropdownField({Key? key, required this.findFn, required this.title, this.onChanged, required this.itemToString, this.inverseBg = false, this.value, this.loadFirstItem = false, this.onEmptyCreate, this.decoration}) : super(key: key);
 
   @override
   State<SmartTableDropdownField<T>> createState() => _SmartTableDropdownFieldState<T>();
@@ -47,11 +49,11 @@ class _SmartTableDropdownFieldState<T> extends State<SmartTableDropdownField<T>>
             focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: BorderSide(color: Theme.of(context).primaryColor)),
             filled: true,
             contentPadding: const EdgeInsets.only(left: 8.0,right: 8.0,top:8.0),
-            hintStyle: Theme.of(context).textTheme.bodySmall!.copyWith(color: Colors.grey),
-            fillColor: widget.inverseBg ? Theme.of(context).scaffoldBackgroundColor : Theme.of(context).canvasColor,
+            hintStyle: widget.decoration?.hintStyle ?? const TextStyle(fontSize: 14.0, fontWeight: FontWeight.normal),
+            fillColor: widget.decoration?.bgColor ?? Colors.transparent,
             hintText: widget.title,
             suffixIcon: const Icon(Icons.arrow_drop_down),
-            focusColor: Theme.of(context).primaryColor,
+            focusColor: widget.decoration?.focusColor ?? Theme.of(context).primaryColor,
             alignLabelWithHint: false),
         onSaved: (str) {},
         onChanged: (dynamic str) => widget.onChanged != null ? widget.onChanged!(str) : {},
@@ -60,8 +62,8 @@ class _SmartTableDropdownFieldState<T> extends State<SmartTableDropdownField<T>>
           style: const TextStyle(fontSize: 14),
         ),
         controller: controller,
-        dropdownColor: Theme.of(context).canvasColor,
-        dropdownBorderColor: Colors.grey,
+        dropdownColor: widget.decoration?.dropdownColor ?? (widget.decoration?.bgColor ?? Colors.white),
+        dropdownBorderColor: widget.decoration?.dropdownBorderColor ?? (widget.decoration?.bgColor ?? Colors.white),
         findFn: widget.findFn,
         dropdownItemFn: (dynamic item, position, focused,
             dynamic lastSelectedItem, onTap) =>
@@ -69,7 +71,7 @@ class _SmartTableDropdownFieldState<T> extends State<SmartTableDropdownField<T>>
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
               child: ListTile(
                 title: Text(widget.itemToString != null ? widget.itemToString!(item) : item.toString(), style: Theme.of(context).textTheme.bodyMedium),
-                tileColor: focused ? Theme.of(context).primaryColor.withOpacity(0.1) : Colors.transparent,
+                tileColor: focused ? Theme.of(context).primaryColor.withOpacity(0.1) : Colors.white,
                 onTap: onTap,
               ),
             ),

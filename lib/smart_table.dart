@@ -85,7 +85,9 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       getHeaderWidget(),
-                      if (column.filterOptions.sortEnabled) Material(child: InkWell(onTap: () => _tableController.applySort(column), child: getSortIcon())),
+                      if (column.filterOptions.sortEnabled) Material(
+                          color: Colors.transparent,
+                          child: InkWell(onTap: () => _tableController.applySort(column), child: getSortIcon())),
                     ],
                   ));
   }
@@ -110,10 +112,15 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
 
     switch (column.columnType) {
       case ColumnType.STRING:
-        return SmartTableSortTextField(onChanged: (newValue) => _handleFilterChange(column, newValue), decoration: inputDecoration, enabled: column.filterOptions.filterEnabled);
+        return SmartTableSortTextField(onChanged: (newValue) => _handleFilterChange(column, newValue),
+            hintText: column.title,
+            decoration: widget.options.decoration?.textFieldDecoration, enabled: column.filterOptions.filterEnabled);
       case ColumnType.NUMERIC:
         return SmartTableSortTextField(
-            textInputType: TextInputType.number, onChanged: (newValue) => _handleFilterChange(column, newValue), decoration: inputDecoration, enabled: column.filterOptions.filterEnabled);
+            hintText: column.title,
+            decoration: widget.options.decoration?.textFieldDecoration,
+            textInputType: TextInputType.number,
+            onChanged: (newValue) => _handleFilterChange(column, newValue), enabled: column.filterOptions.filterEnabled);
       case ColumnType.DATE:
         return SmartTableDatePicker(onValueChanged: (DateTime value) => _handleFilterChange(column, value));
       case ColumnType.DATE_RANGE:
@@ -169,7 +176,7 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
                                         children: widget.options.columns.indexedMap((c, i) {
                                           return _buildCell(null, c);
                                         }).toList()),
-                                    TableRow(
+                                    if(widget.options.columns.any((c) => c.filterOptions.filterEnabled)) TableRow(
                                         children: widget.options.columns.indexedMap((c, i) {
                                           return _buildCell(null, c, isSearchRow: true);
                                         }).toList()),
@@ -180,10 +187,13 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
                                         ]
                                     ),*/
                                     ..._tableController.tableData.value?.filterResponse.content
-                                        .indexedMap((e, rowIndex) => TableRow(
+                                        .indexedMap((e, rowIndex) {
+                                          final rowColor = decoration?.rowDecoration?.rowColor ?? Colors.transparent;
+                                          final secondaryRowColor = decoration?.rowDecoration?.secondaryRowColor;
+                                          return TableRow(
                                         decoration: BoxDecoration(
                                             borderRadius: _tableController.tableData.value?.filterResponse.content.length == rowIndex + 1 ? const BorderRadius.only(bottomLeft: Radius.circular(16.0), bottomRight: Radius.circular(16.0)) : null,
-                                            color: rowIndex % 2 != 0 ? (decoration?.secondaryRowColor ?? Theme.of(context).scaffoldBackgroundColor) : Theme.of(context).canvasColor),
+                                            color: secondaryRowColor == null ? rowColor : (rowIndex % 2 != 0 ? secondaryRowColor : rowColor)),
                                         children: [
                                           ...widget.options.columns.indexedMap((c, i) {
                                             return TableRowInkWell(
@@ -207,7 +217,8 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
                                                 },
                                                 child: _buildCell(e, c, rowCellBuilder: widget.rows[c.name]));
                                           }),
-                                        ]))
+                                        ]);
+                                        })
                                         .toList() ?? [],
                                   ]),
                             ),
@@ -323,6 +334,9 @@ class SmartTableHeader<T> extends StatelessWidget {
               children: [
                 TextButton.icon(
                     icon: Icon(Icons.add, color: options.headerOptions?.addNewButtonIconColor),
+                    style: TextButton.styleFrom(
+                       foregroundColor: Theme.of(context).primaryColor
+                    ),
                     onPressed: options.onAddNewElement == null
                         ? null
                         : () async {
