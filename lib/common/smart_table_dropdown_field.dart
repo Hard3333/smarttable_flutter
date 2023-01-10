@@ -5,7 +5,7 @@ import 'package:smart_table_flutter/extensions/dropdown_plus/dropdown_plus.dart'
 class SmartTableDropdownField<T> extends StatefulWidget {
   final Future<List<T>> Function(String str) findFn;
   final String title;
-  final void Function(T item)? onChanged;
+  final void Function(T? item)? onChanged;
   final String Function(T item)? itemToString;
   final bool inverseBg;
   final T? value;
@@ -57,9 +57,20 @@ class _SmartTableDropdownFieldState<T> extends State<SmartTableDropdownField<T>>
             alignLabelWithHint: false),
         onSaved: (str) {},
         onChanged: (dynamic str) => widget.onChanged != null ? widget.onChanged!(str) : {},
-        displayItemFn: (dynamic item) => Text(
-          item != null ? (widget.itemToString != null ? widget.itemToString!(item) : item.toString()) : "",
-          style: const TextStyle(fontSize: 14),
+        displayItemFn: (dynamic item) => Row(
+          children: [
+            Text(
+              item != null ? (widget.itemToString != null ? widget.itemToString!(item) : item.toString()) : "",
+              style: const TextStyle(fontSize: 14),
+            ),
+            const Spacer(),
+            if(controller.value != null) InkWell(
+                onTap: () {
+                  widget.onChanged!(null);
+                  controller.value = null;
+                },
+                child: Icon(Icons.clear,size: 18 ,color: Theme.of(context).disabledColor))
+          ],
         ),
         controller: controller,
         dropdownColor: widget.decoration?.dropdownColor ?? (widget.decoration?.bgColor ?? Colors.white),

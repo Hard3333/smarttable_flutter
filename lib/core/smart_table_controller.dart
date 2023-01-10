@@ -52,10 +52,10 @@ class SmartTableController<T> extends GetxController{
   }
 
   Future<void> listenPageChanges(TablePageData tablePage) async {
-    if (currentTablePage.value.page != tablePage.page) {
+    //if (currentTablePage.value.page != tablePage.page) {
       if (tablePage.page > (totalPages ?? 0)) throw Exception("Hiba az adatok frissítése közben. Ismeretlen oldal!");
       await _loadDataToTable(page: tablePage.page);
-    }
+    //}
   }
 
   void setPage(TablePageData tablePageData) {
