@@ -148,6 +148,7 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
         return SmartTableSortCheckbox(onChanged: (bool value) => _handleFilterChange(column, value));
       case ColumnType.DROPDOWN:
         return SmartTableDropdownField<dynamic>(
+            decoration: widget.options.decoration?.dropdownDecoration,
             title: column.title, itemToString: column.filterOptions.itemToString, findFn: column.filterOptions.onFind!, onChanged: (value) => _handleFilterChange(column, value));
     }
   }

@@ -56,7 +56,7 @@ class _SmartTableDropdownFieldState<T> extends State<SmartTableDropdownField<T>>
             focusColor: widget.decoration?.focusColor ?? Theme.of(context).primaryColor,
             alignLabelWithHint: false),
         onSaved: (str) {},
-        onChanged: (dynamic str) => widget.onChanged != null ? widget.onChanged!(str) : {},
+        onChanged: widget.onChanged != null ? widget.onChanged! : null,
         displayItemFn: (dynamic item) => Row(
           children: [
             Text(
@@ -82,7 +82,7 @@ class _SmartTableDropdownFieldState<T> extends State<SmartTableDropdownField<T>>
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
               child: ListTile(
                 title: Text(widget.itemToString != null ? widget.itemToString!(item) : item.toString(), style: Theme.of(context).textTheme.bodyMedium),
-                tileColor: focused ? Theme.of(context).primaryColor.withOpacity(0.1) : Colors.white,
+                tileColor: focused ? (widget.decoration?.focusColor ?? Theme.of(context).primaryColor.withOpacity(0.1)) : (widget.decoration?.bgColor ?? Colors.white),
                 onTap: onTap,
               ),
             ),
