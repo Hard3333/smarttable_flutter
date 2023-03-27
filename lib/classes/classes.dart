@@ -8,6 +8,7 @@ import 'package:smart_table_flutter/smart_table.dart';
 typedef GetData<T> = Future<FilterResponse<T>> Function(TableFilterData tableFilterData);
 typedef ColumnHeaderBuilder = Widget Function();
 typedef RowCellBuilder<T> = Widget Function(T value);
+typedef OnSelectionChanged<T> = void Function(List<T> selectedElements);
 
 const _DEFAULT_PAGE_SIZE = 20;
 
@@ -29,15 +30,17 @@ class AsyncDataSource<T> extends DataSource<T> {
 class SmartTableOptions<T> {
   final List<SmartTableColumn> columns;
   final SmartTableDecoration? decoration;
+  final List<T>? selectedElements;
   final String Function(T item)? itemToString;
   final List<SmartTableDialogItem> Function(T item)? customMenuItemsBuilder;
   final OnAddNewElement<T>? onAddNewElement;
   final OnRemoveElement<T>? onRemoveElement;
   final OnElementModify<T>? onElementModify;
+  final OnSelectionChanged<T>? onSelectionChanged;
   final HeaderOptions? headerOptions;
 
   const SmartTableOptions(
-      {required this.columns, this.decoration, this.itemToString, this.customMenuItemsBuilder, this.onAddNewElement, this.onRemoveElement, this.onElementModify, this.headerOptions});
+      {required this.columns, this.selectedElements, this.decoration, this.itemToString, this.onSelectionChanged, this.customMenuItemsBuilder, this.onAddNewElement, this.onRemoveElement, this.onElementModify, this.headerOptions});
 }
 
 class SmartTableDecoration {
@@ -190,7 +193,7 @@ class SmartTableColumnFilterOptions<T> {
   const SmartTableColumnFilterOptions({this.onFind, this.filterEnabled = false, this.sortEnabled = false, this.filterHintText, this.itemToString, this.loadFirstItemAutomaticallyInDropdown = false});
 }
 
-enum ColumnType { STRING, NUMERIC, DATE_RANGE, DATE, BOOLEAN, DROPDOWN }
+enum ColumnType { STRING, NUMERIC, DATE_RANGE, DATE, BOOLEAN, DROPDOWN, SELECTION }
 
 enum ColumnSortType { NONE, ASC, DESC }
 

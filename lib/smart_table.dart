@@ -41,20 +41,26 @@ class SmartTable<T> extends StatefulWidget {
 class _SmartTableState<T> extends State<SmartTable<T>> {
   late SmartTableController<T> _tableController;
 
+  final List<T> selectedElements = <T>[];
+
   @override
   void initState() {
     super.initState();
     _tableController = SmartTableController<T>(dataSource: widget.dataSource, onTableError: widget.onTableError, pageSize: widget.pageSize);
     _tableController.init();
     if (widget.onControllerCreated != null) widget.onControllerCreated!(_tableController);
+
+    selectedElements.addAll(widget.options.selectedElements ?? <T>[]);
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
+  void didUpdateWidget(covariant SmartTable<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    selectedElements.clear();
+    selectedElements.addAll(widget.options.selectedElements ?? <T>[]);
   }
 
-  Widget _buildCell(T? value, SmartTableColumn column, {RowCellBuilder<T>? rowCellBuilder, bool isSearchRow = false}) {
+  Widget _buildCell(T? value, SmartTableColumn column, int rowIndex ,{RowCellBuilder<T>? rowCellBuilder, bool isSearchRow = false}) {
     Widget getHeaderWidget() {
       return Text(column.title, style: Theme
           .of(context)
@@ -62,6 +68,25 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
           .titleMedium);
     }
 
+    Widget getSelectionWidget(){
+      final elementIsSelected = selectedElements.contains(value);
+      return isSearchRow ? _generateSearchWidgetForColumn(column) : value == null ? getHeaderWidget() : Checkbox(
+          activeColor: widget.options.decoration?.sortIconDecoration?.activeColor ?? Theme.of(context).primaryColor,
+          value: elementIsSelected, onChanged: (isSelected) {
+            print("isSelected:$isSelected");
+        if(isSelected == true){
+          if(elementIsSelected) {
+            //DO NOTHING
+          } else {
+            selectedElements.add(value!);
+          }
+        }else if(isSelected == false) {
+          selectedElements.removeWhere((e) => e == value);
+        }
+        if(widget.options.onSelectionChanged != null) widget.options.onSelectionChanged!(selectedElements);
+      });
+    }
+    
     Icon getSortIcon() {
       final sortedColumn = _tableController.sortedColumn.value;
       final inactiveColor = widget.options.decoration?.sortIconDecoration?.inactiveColor ?? Theme
@@ -90,7 +115,7 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
             ? rowCellBuilder(value!)
             : isSearchRow
             ? _generateSearchWidgetForColumn(column)
-            : Row(
+            : column.columnType == ColumnType.SELECTION ? getSelectionWidget() : Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             getHeaderWidget(),
@@ -106,7 +131,7 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
   }
 
   Widget _generateSearchWidgetForColumn(SmartTableColumn column) {
-    if (!column.filterOptions.filterEnabled) return Container(height: 0);
+    if (!column.filterOptions.filterEnabled && column.columnType != ColumnType.SELECTION) return Container(height: 0);
     final inputDecoration = InputDecoration(
         fillColor: widget.options.decoration?.filterDecoration?.filterTextFieldDecoration?.fillColor ?? Theme
             .of(context)
@@ -150,6 +175,15 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
         return SmartTableDropdownField<dynamic>(
             decoration: widget.options.decoration?.dropdownDecoration,
             title: column.title, itemToString: column.filterOptions.itemToString, findFn: column.filterOptions.onFind!, onChanged: (value) => _handleFilterChange(column, value));
+      case ColumnType.SELECTION: return IconButton(onPressed: () {
+        if(selectedElements.length == _tableController.tableData.value!.filterResponse.content.length){
+          selectedElements.clear();
+        }else {
+          selectedElements.clear();
+          selectedElements.addAll(_tableController.tableData.value!.filterResponse.content);
+        }
+        if(widget.options.onSelectionChanged != null) widget.options.onSelectionChanged!(selectedElements);
+      }, icon: Icon(selectedElements.length == _tableController.tableData.value?.filterResponse.content.length ? Icons.deselect : Icons.select_all, color: widget.options.decoration?.sortIconDecoration?.activeColor ?? Theme.of(context).primaryColor));
     }
   }
 
@@ -191,17 +225,16 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
                                     border: TableBorder.all(borderRadius: BorderRadius.circular(16.0), color: widget.options.decoration?.borderColor ?? Theme
                                         .of(context)
                                         .dividerColor),
-                                    columnWidths:
-                                    widget.options.columns.indexedMap((c, i) => c.columnWidth ?? (i == 0 ? const IntrinsicColumnWidth() : const IntrinsicColumnWidth(flex: 1))).toList().asMap(),
+                                    columnWidths: widget.options.columns.indexedMap((c, i) => c.columnWidth ?? (i == 0 ? const IntrinsicColumnWidth() : const IntrinsicColumnWidth(flex: 1))).toList().asMap(),
                                     children: [
                                       TableRow(
                                           children: widget.options.columns.indexedMap((c, i) {
-                                            return _buildCell(null, c);
+                                            return _buildCell(null, c, i);
                                           }).toList()),
                                       if (widget.options.columns.any((c) => c.filterOptions.filterEnabled))
                                         TableRow(
                                             children: widget.options.columns.indexedMap((c, i) {
-                                              return _buildCell(null, c, isSearchRow: true);
+                                              return _buildCell(null, c, i, isSearchRow: true);
                                             }).toList()),
                                       /*             if(_tableController.tableData.value?.filterResponse.totalCount == 0) TableRow(
                                         children: [
@@ -239,7 +272,7 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
                                                             animationType: DialogTransitionType.scale);
                                                       }
                                                     },
-                                                    child: _buildCell(e, c, rowCellBuilder: widget.rows[c.name]));
+                                                    child: _buildCell(e, c, i, rowCellBuilder: widget.rows[c.name]));
                                               }),
                                             ]);
                                       }).toList() ??
