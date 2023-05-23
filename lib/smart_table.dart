@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
@@ -14,6 +15,8 @@ import 'package:smart_table_flutter/core/smart_table_controller.dart';
 import 'package:smart_table_flutter/core/utils.dart';
 import 'package:flutter_animated_dialog/flutter_animated_dialog.dart';
 export 'package:smart_table_flutter/classes/classes.dart';
+import 'package:csv/csv.dart';
+import 'dart:html' as html;
 
 typedef OnControllerCreated<T> = Function(SmartTableController<T> smartTableController);
 typedef OnAddNewElement<T> = FutureOr<T?> Function();
@@ -35,10 +38,10 @@ class SmartTable<T> extends StatefulWidget {
   const SmartTable({Key? key, required this.dataSource, required this.options, this.onControllerCreated, this.onTableError, this.pageSize, required this.rows}) : super(key: key);
 
   @override
-  State<SmartTable<T>> createState() => _SmartTableState<T>();
+  State<SmartTable<T>> createState() => SmartTableState<T>();
 }
 
-class _SmartTableState<T> extends State<SmartTable<T>> {
+class SmartTableState<T> extends State<SmartTable<T>> {
   late SmartTableController<T> _tableController;
 
   final List<T> selectedElements = <T>[];
@@ -58,6 +61,30 @@ class _SmartTableState<T> extends State<SmartTable<T>> {
     super.didUpdateWidget(oldWidget);
     selectedElements.clear();
     selectedElements.addAll(widget.options.selectedElements ?? <T>[]);
+  }
+
+  Future<void> exportDataToCsv(String fileName, Function(dynamic data, int columnIndex) generator, int columnNumber, List<String> headerRow, {bool? exportOnlyCurrentPageData}) async{
+    final dataRows = await _tableController.exportDataRowsToCsvFormat(generator, columnNumber, exportOnlyCurrentPageData: exportOnlyCurrentPageData);
+
+    const conv = ListToCsvConverter();
+
+    // A fejléc listája
+    dataRows.insert(0, headerRow);
+
+    final csv = conv.convert(dataRows);
+
+    if(kIsWeb){
+      final blob = html.Blob([csv]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      final anchor = html.document.createElement('a') as html.AnchorElement
+        ..href = url
+        ..style.display = 'none'
+        ..download = fileName;
+      html.document.body!.children.add(anchor);
+      anchor.click();
+      html.document.body!.children.remove(anchor);
+      html.Url.revokeObjectUrl(url);
+    }
   }
 
   Widget _buildCell(T? value, SmartTableColumn column, int rowIndex ,{RowCellBuilder<T>? rowCellBuilder, bool isSearchRow = false}) {

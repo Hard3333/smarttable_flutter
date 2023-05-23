@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:smart_table_flutter/classes/classes.dart';
 import 'package:smart_table_flutter/classes/filter_response.dart';
+
 
 typedef OnTableError(SmartTableException e);
 
@@ -112,4 +115,20 @@ class SmartTableController<T> extends GetxController{
     await _loadDataToTable(page: currentTablePage.value.page);
   }
 
+  Future<List<List<dynamic>>> exportDataRowsToCsvFormat(Function(T data, int columnIndex) generator, int columnNumber, {bool? exportOnlyCurrentPageData = true}) async{
+    List<List<dynamic>> dataRows = [];
+    final tableDataForExport = exportOnlyCurrentPageData! ? tableData.value!.filterResponse : (await dataSource.getData(TableFilterData(page: 0, pageSize: 9999999)));
+
+    tableDataForExport.content.forEach((data) {
+        final row = <dynamic>[];
+
+        for (int i = 0; i<columnNumber; i++){
+          row.add(generator(data, i));
+        }
+
+        dataRows.add(row);
+      });
+
+    return dataRows;
+  }
 }
